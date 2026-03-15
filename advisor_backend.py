@@ -2,7 +2,7 @@
 Gesundheitsberater Backend
 ===========================
 Lokaler HTTP-Server der die Garmin+YAZIO DB liest und
-Chat-Anfragen an Claude weiterleitet.
+Chat-Anfragen an Claude (Anthropic) weiterleitet.
 
 Start: py advisor_backend.py
 Dann: http://localhost:8765
@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_PATH      = Path(os.getenv("GARMIN_DB_PATH", "garmin_data.db"))
+DB_PATH       = Path(os.getenv("GARMIN_DB_PATH", "garmin_data.db"))
 ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 PORT          = 8765
 HISTORY_DAYS  = 30
