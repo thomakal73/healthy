@@ -2,7 +2,7 @@
 Gesundheitsberater Backend
 ===========================
 Lokaler HTTP-Server der die Garmin+YAZIO DB liest und
-Chat-Anfragen an Google Gemini weiterleitet.
+Chat-Anfragen an Claude (Anthropic) weiterleitet.
 
 Start: py advisor_backend.py
 Dann: http://localhost:8765
@@ -19,11 +19,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_PATH     = Path(os.getenv("GARMIN_DB_PATH", "garmin_data.db"))
-GOOGLE_KEY  = os.getenv("GOOGLE_API_KEY", "")
-PORT        = 8765
-HISTORY_DAYS = 30
-GEMINI_URL  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+DB_PATH       = Path(os.getenv("GARMIN_DB_PATH", "garmin_data.db"))
+ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+PORT          = 8765
+HISTORY_DAYS  = 30
 
 
 # ── Daten aus DB laden ─────────────────────────────────────────────────────────
@@ -244,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json({
                 "db_exists": DB_PATH.exists(),
                 "days_available": len(load_combined_data()),
-                "api_key_set": bool(GOOGLE_KEY),
+                "api_key_set": bool(ANTHROPIC_KEY),
                 "latest_date": data[0]["date"] if data else None,
             })
         else:
@@ -258,46 +257,44 @@ class Handler(BaseHTTPRequestHandler):
             messages  = body.get("messages", [])
             days      = body.get("days", HISTORY_DAYS)
 
-            if not GOOGLE_KEY:
-                self._json({"error": "GOOGLE_API_KEY fehlt in .env"}, 500)
+            if not ANTHROPIC_KEY:
+                self._json({"error": "ANTHROPIC_API_KEY fehlt in .env"}, 500)
                 return
 
             context = build_context(days)
 
-            # Gesprächsverlauf für Gemini aufbauen
-            # Kontext einmalig als erstes User-Turn injizieren
-            gemini_contents = [
-                {"role": "user",  "parts": [{"text": f"Hier sind meine aktuellen Gesundheitsdaten:\n\n{context}"}]},
-                {"role": "model", "parts": [{"text": "Ich habe deine Daten geladen und analysiert. Was möchtest du wissen?"}]},
-            ]
-            for msg in messages:
-                role = "model" if msg["role"] == "assistant" else "user"
-                gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+            # Kontext als erstes User-Message injizieren
+            full_messages = [
+                {"role": "user",      "content": f"Hier sind meine aktuellen Gesundheitsdaten:\n\n{context}"},
+                {"role": "assistant", "content": "Ich habe deine Daten geladen und analysiert. Was möchtest du wissen?"},
+            ] + messages
 
             try:
                 req_body = json.dumps({
-                    "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-                    "contents": gemini_contents,
-                    "generationConfig": {
-                        "maxOutputTokens": 1500,
-                        "temperature": 0.7,
-                    },
+                    "model": "claude-sonnet-4-20250514",
+                    "max_tokens": 1500,
+                    "system": SYSTEM_PROMPT,
+                    "messages": full_messages,
                 }).encode()
 
                 req = urllib.request.Request(
-                    f"{GEMINI_URL}?key={GOOGLE_KEY}",
+                    "https://api.anthropic.com/v1/messages",
                     data=req_body,
-                    headers={"Content-Type": "application/json"},
+                    headers={
+                        "x-api-key": ANTHROPIC_KEY,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                    },
                     method="POST",
                 )
                 with urllib.request.urlopen(req, timeout=60) as resp:
                     result = json.loads(resp.read())
-                    reply = result["candidates"][0]["content"]["parts"][0]["text"]
+                    reply = result["content"][0]["text"]
                     self._json({"reply": reply})
 
             except urllib.error.HTTPError as e:
                 err = e.read().decode()
-                self._json({"error": f"Gemini API Fehler: {err}"}, 500)
+                self._json({"error": f"Claude API Fehler: {err}"}, 500)
             except Exception as e:
                 self._json({"error": str(e)}, 500)
 
@@ -323,10 +320,10 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    if not GOOGLE_KEY:
-        print("WARNUNG: GOOGLE_API_KEY nicht in .env gesetzt!")
+    if not ANTHROPIC_KEY:
+        print("WARNUNG: ANTHROPIC_API_KEY nicht in .env gesetzt!")
         print("Trage deinen API-Key in die .env Datei ein:")
-        print("  GOOGLE_API_KEY=AIza...")
+        print("  ANTHROPIC_API_KEY=sk-ant-...")
         print()
 
     print(f"Gesundheitsberater gestartet: http://localhost:{PORT}")
