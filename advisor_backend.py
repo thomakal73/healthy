@@ -105,6 +105,94 @@ def load_top_foods(days: int = HISTORY_DAYS) -> list[dict]:
         conn.close()
 
 
+def load_meal_details(days: int = HISTORY_DAYS) -> dict:
+    """Mahlzeit-Einträge der letzten N Tage gruppiert nach Datum und Mahlzeit."""
+    if not DB_PATH.exists():
+        return {}
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute("""
+            SELECT date, meal_type, food_name,
+                   ROUND(amount_g, 0) as amount_g,
+                   ROUND(calories, 1) as calories,
+                   ROUND(protein_g, 1) as protein_g,
+                   ROUND(carbs_g, 1) as carbs_g,
+                   ROUND(fat_g, 1) as fat_g,
+                   ROUND(fiber_g, 1) as fiber_g,
+                   ROUND(sugar_g, 1) as sugar_g,
+                   ROUND(salt_g, 2) as salt_g,
+                   ROUND(cholesterol_mg, 1) as cholesterol_mg,
+                   ROUND(calcium_mg, 1) as calcium_mg,
+                   ROUND(magnesium_mg, 1) as magnesium_mg,
+                   ROUND(iron_mg, 2) as iron_mg,
+                   ROUND(zinc_mg, 2) as zinc_mg,
+                   ROUND(vitamin_c_mg, 1) as vitamin_c_mg,
+                   ROUND(vitamin_d_ug, 2) as vitamin_d_ug,
+                   ROUND(vitamin_b12_ug, 2) as vitamin_b12_ug,
+                   ROUND(vitamin_b9_ug, 1) as vitamin_b9_ug
+            FROM yazio_entries
+            WHERE date >= date('now', ?)
+              AND food_name IS NOT NULL
+            ORDER BY date DESC, meal_type, calories DESC
+        """, (f"-{days} days",)).fetchall()
+
+        # Nach Datum gruppieren
+        by_date = {}
+        for r in rows:
+            d = r["date"]
+            if d not in by_date:
+                by_date[d] = {"breakfast": [], "lunch": [], "dinner": [], "snack": []}
+            meal = r["meal_type"] if r["meal_type"] in by_date[d] else "snack"
+            by_date[d][meal].append({
+                "name": r["food_name"],
+                "amount": r["amount_g"],
+                "kcal": r["calories"],
+                "p": r["protein_g"],
+                "c": r["carbs_g"],
+                "f": r["fat_g"],
+                "fiber": r["fiber_g"],
+                "sugar": r["sugar_g"],
+                "salt": r["salt_g"],
+                "chol": r["cholesterol_mg"],
+                "ca": r["calcium_mg"],
+                "mg": r["magnesium_mg"],
+                "fe": r["iron_mg"],
+                "zn": r["zinc_mg"],
+                "vitC": r["vitamin_c_mg"],
+                "vitD": r["vitamin_d_ug"],
+                "b12": r["vitamin_b12_ug"],
+                "folat": r["vitamin_b9_ug"],
+            })
+        return by_date
+    except Exception:
+        return {}
+    finally:
+        conn.close()
+
+
+def load_activities(days: int = HISTORY_DAYS) -> list[dict]:
+    """Aktivitäten der letzten N Tage."""
+    if not DB_PATH.exists():
+        return []
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute("""
+            SELECT date, name, activity_type,
+                   ROUND(duration_sec / 60.0) as minutes,
+                   calories, avg_hr
+            FROM activities
+            WHERE date >= date('now', ?)
+            ORDER BY date DESC, start_time DESC
+        """, (f"-{days} days",)).fetchall()
+        return [dict(r) for r in rows]
+    except Exception:
+        return []
+    finally:
+        conn.close()
+
+
 def build_context(days: int = HISTORY_DAYS) -> str:
     """Kompakter Kontext-String für Claude."""
     data = load_combined_data(days)
@@ -192,11 +280,57 @@ def build_context(days: int = HISTORY_DAYS) -> str:
         )
     lines.append("")
 
+    # Aktivitäten
+    activities = load_activities(days)
+    if activities:
+        lines.append("## Aktivitäten")
+        lines.append(f"{'Datum':<12} {'Name':<30} {'Min':>5} {'Kcal':>5} {'HR':>4}")
+        lines.append("-" * 58)
+        for a in activities:
+            name = str(a['name'] or '')[:29]
+            lines.append(
+                f"{a['date']:<12} {name:<30} "
+                f"{str(int(a['minutes'] or 0)):>5} "
+                f"{str(a['calories'] or '–'):>5} "
+                f"{str(a['avg_hr'] or '–'):>4}"
+            )
+        lines.append("")
+
     # Häufigste Lebensmittel
     if foods:
         lines.append("## Häufig gegessene Lebensmittel")
         for f in foods:
             lines.append(f"- {f['food_name']} ({f['freq']}x, ~{f['avg_kcal']} kcal, ~{f['avg_protein']}g Protein)")
+    lines.append("")
+
+    # Mahlzeit-Details pro Tag (letzte 7 Tage detailliert)
+    meal_days = min(days, 7)
+    meals = load_meal_details(meal_days)
+    if meals:
+        lines.append(f"## Mahlzeit-Details (letzte {meal_days} Tage)")
+        for day_date in sorted(meals.keys(), reverse=True):
+            day_meals = meals[day_date]
+            lines.append(f"\n### {day_date}")
+            for meal_name, label in [("breakfast","Frühstück"), ("lunch","Mittagessen"), ("dinner","Abendessen"), ("snack","Snack")]:
+                items = day_meals.get(meal_name, [])
+                if not items:
+                    continue
+                meal_kcal = sum(i["kcal"] for i in items)
+                meal_p    = sum(i["p"] for i in items)
+                meal_c    = sum(i["c"] for i in items)
+                meal_f    = sum(i["f"] for i in items)
+                meal_fiber = sum(i.get("fiber") or 0 for i in items)
+                meal_salt  = sum(i.get("salt")  or 0 for i in items)
+                lines.append(f"{label} ({round(meal_kcal)} kcal | P:{round(meal_p)}g C:{round(meal_c)}g F:{round(meal_f)}g | Ballaststoffe:{round(meal_fiber,1)}g Salz:{round(meal_salt,1)}g):")
+                for item in items:
+                    micro = []
+                    if item.get("vitC"):  micro.append(f"VitC:{item['vitC']}mg")
+                    if item.get("vitD"):  micro.append(f"VitD:{item['vitD']}ug")
+                    if item.get("ca"):    micro.append(f"Ca:{item['ca']}mg")
+                    if item.get("fe"):    micro.append(f"Fe:{item['fe']}mg")
+                    if item.get("b12"):   micro.append(f"B12:{item['b12']}ug")
+                    micro_str = f" | {', '.join(micro)}" if micro else ""
+                    lines.append(f"  - {item['name']}: {round(item['amount'])}g → {item['kcal']} kcal, P:{item['p']}g C:{item['c']}g F:{item['f']}g Ballaststoffe:{item.get('fiber',0)}g{micro_str}")
 
     return "\n".join(lines)
 
