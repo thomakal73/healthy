@@ -58,7 +58,7 @@ PROFILE_URL = f"{API_BASE}/v7/users/me"
 CLIENT_ID     = "3_5rbw4kehpugw8ogsc8ck8oo4ogswgckcskc04gcg8kk8k48ssw"
 CLIENT_SECRET = "25gdtt1hvdi8gwowoww4oo88sgsw0oo04o0og0kkgwwks8k0k"
 
-TOKEN_CACHE_FILE = Path(".yazio_token.json")
+TOKEN_CACHE_FILE = Path(os.getenv("YAZIO_TOKEN_FILE", ".yazio_token.json"))
 
 
 # ── Database ───────────────────────────────────────────────────────────────────

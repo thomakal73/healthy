@@ -150,7 +150,7 @@ def get_garmin_client():
     except ImportError:
         raise SystemExit("garminconnect/garth nicht installiert. Run: pip install garminconnect garth")
 
-    token_path = os.path.expanduser("~/.garth")
+    token_path = os.getenv("GARTH_HOME", os.path.expanduser("~/.garth"))
 
     if os.path.exists(token_path):
         log.info("Token aus ~/.garth laden ...")
@@ -190,7 +190,12 @@ def fetch_daily_summary(client, conn: sqlite3.Connection, day: date):
         hydration = client.get_hydration_data(d) or {}
 
         # Body battery: highest and lowest of the day
-        bb_values = [e.get("value", 0) for e in body_battery if e.get("value") is not None]
+        bb_values = []
+        for entry in body_battery:
+            arr = entry.get("bodyBatteryValuesArray", [])
+            for item in arr:
+                if isinstance(item, list) and len(item) >= 2 and item[1] is not None:
+                    bb_values.append(item[1])
         bb_high = max(bb_values) if bb_values else None
         bb_low = min(bb_values) if bb_values else None
 

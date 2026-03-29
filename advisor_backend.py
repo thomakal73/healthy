@@ -463,4 +463,4 @@ if __name__ == "__main__":
     print(f"Gesundheitsberater gestartet: http://localhost:{PORT}")
     print(f"Datenbank: {DB_PATH} ({'gefunden' if DB_PATH.exists() else 'NICHT GEFUNDEN'})")
     print("Beenden: Ctrl+C")
-    HTTPServer(("localhost", PORT), Handler).serve_forever()
+    HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

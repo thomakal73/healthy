@@ -161,7 +161,7 @@ def build_ai_context(conn: sqlite3.Connection, days: int = 14) -> str:
     lines = [
         f"Gesundheitsdaten der letzten {days} Tage (neueste zuerst):\n",
         f"{'Datum':<12} {'Kcal':>5} {'Ziel':>5} {'P':>4} {'C':>4} {'F':>4} "
-        f"{'H2O':>5} {'Kcal↑':>5} {'Schritte':>8} {'Schlaf':>6} {'BB':>4} {'Stress':>6} {'Gewicht':>7}",
+        f"{'H2O':>5} {'Kcal↑':>5} {'Schritte':>8} {'Schlaf':>6} {'Score':>5} {'BB':>7} {'Stress':>6} {'Gewicht':>7}",
         "-" * 100,
     ]
     for d in data:
@@ -179,7 +179,8 @@ def build_ai_context(conn: sqlite3.Connection, days: int = 14) -> str:
             f"{str(round(d['kcal_burned'] or 0)):>5} "
             f"{str(d['steps'] or '–'):>8} "
             f"{sleep:>6} "
-            f"{bb:>4} "
+            f"{str(d['sleep_score'] or '–'):>5} "
+            f"{bb:>7} "
             f"{str(d['stress_avg'] or '–'):>6} "
             f"{(str(round(d['weight_kg'], 1)) + 'kg') if d['weight_kg'] else '–':>7}"
         )
