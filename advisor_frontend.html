@@ -13,10 +13,9 @@
     --surface2:     #eeecea;
     --surface3:     #e8e5e1;
     --text:         #1a1917;
-    --text-muted:   #7a7671;
+    --text-muted:   #4a4642;
     --accent:       #d4521a;
     --accent-soft:  #f0e8e1;
-    --accent2:      #2d7d9a;
     --border:       #e0ddd8;
     --online:       #2d9e6b;
     --user-bubble:  #f0e8e1;
@@ -31,10 +30,9 @@
       --surface2:     #252320;
       --surface3:     #2e2b27;
       --text:         #f0ede8;
-      --text-muted:   #7a7671;
+      --text-muted:   #9a9590;
       --accent:       #e06030;
       --accent-soft:  #2a1e16;
-      --accent2:      #4a9ebb;
       --border:       #2e2b27;
       --online:       #3ab87c;
       --user-bubble:  #2a1e16;
@@ -44,48 +42,25 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
 
-  html, body {
-    height: 100%;
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    overflow: hidden;
-  }
-
-  /* ── App Shell ── */
-  .app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
+  .app { display: flex; flex-direction: column; height: 100vh; }
 
   /* ── Header ── */
   header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.9rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     gap: 1rem;
   }
 
-  .header-left {
-    display: flex;
-    align-items: baseline;
-    gap: 0.8rem;
-  }
+  .header-left { display: flex; align-items: center; gap: 1.2rem; }
 
-  .logo {
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .logo span { color: var(--accent); }
+  .logo { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
 
   .logo-sub {
     font-family: 'Syne Mono', monospace;
@@ -95,28 +70,52 @@
     text-transform: uppercase;
   }
 
-  .header-right {
+  /* ── Tabs ── */
+  .tabs {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 0;
-  }
-
-  /* ── Days Selector ── */
-  .days-selector {
-    display: flex;
-    gap: 3px;
+    gap: 2px;
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 7px;
     padding: 3px;
   }
 
+  .tab-btn {
+    padding: 4px 14px;
+    border-radius: 5px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  .header-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; }
+
+  /* ── Zeitraum ── */
+  .timerange {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .days-selector { display: flex; gap: 2px; }
+
   .days-btn {
-    padding: 3px 10px;
+    padding: 3px 9px;
     border-radius: 4px;
     font-family: 'Syne Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     border: none;
     background: transparent;
     color: var(--text-muted);
@@ -124,349 +123,273 @@
     transition: all 0.15s;
     font-weight: 600;
   }
-
   .days-btn:hover { color: var(--accent); }
-  .days-btn.active {
-    background: var(--surface);
-    color: var(--accent);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
+  .days-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
-  /* ── Status Pills ── */
-  .status-bar { display: flex; gap: 6px; align-items: center; }
+  .timerange-divider { width: 1px; height: 1.2rem; background: var(--border); }
+
+  .date-range { display: flex; align-items: center; gap: 0.35rem; }
+
+  .date-range input[type="date"] {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.68rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    outline: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.15s;
+    color-scheme: light dark;
+  }
+  .date-range input[type="date"]:hover { background: var(--surface); color: var(--text); }
+  .date-range input[type="date"]:focus { background: var(--surface); color: var(--accent); }
+  .date-sep { font-family: 'Syne Mono', monospace; font-size: 0.65rem; color: var(--text-muted); }
+
+  .date-apply-btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .date-apply-btn:hover { background: var(--accent); color: white; }
+
+  /* ── Sync + Status ── */
+  .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+
+  .last-sync { font-family: 'Syne Mono', monospace; font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; }
+
+  .sync-btn {
+    display: flex; align-items: center; gap: 0.35rem;
+    font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s;
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .sync-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .sync-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .sync-icon { font-size: 0.85rem; display: inline-block; }
+  .sync-icon.spinning { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-bar { display: flex; gap: 5px; align-items: center; }
 
   .pill {
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-family: 'Syne Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.03em;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    background: var(--surface2);
-    white-space: nowrap;
+    padding: 3px 8px; border-radius: 20px;
+    font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.03em;
+    border: 1px solid var(--border); color: var(--text-muted); background: var(--surface2); white-space: nowrap;
   }
-
-  .pill.ok  { border-color: var(--online); color: var(--online); background: transparent; }
-  .pill.err { border-color: #c0392b; color: #c0392b; background: transparent; }
+  .pill.ok   { border-color: var(--online); color: var(--online); background: transparent; }
+  .pill.err  { border-color: #c0392b; color: #c0392b; background: transparent; }
   .pill.warn { border-color: #c9912a; color: #c9912a; background: transparent; }
 
-  /* ── Main Layout ── */
-  .main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
+  /* ── Main ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
 
   /* ── Sidebar ── */
   .sidebar {
-    width: 260px;
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    overflow: hidden;
+    width: 255px; border-right: 1px solid var(--border);
+    background: var(--surface); display: flex; flex-direction: column;
+    flex-shrink: 0; overflow: hidden;
   }
 
   .sidebar-section {
-    padding: 0.9rem 1rem 0.5rem;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--text-muted);
-    font-weight: 700;
-    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1rem 0.5rem;
+    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border);
   }
 
   .quick-questions {
-    padding: 0.6rem;
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    padding: 0.5rem; flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 3px;
   }
-
   .quick-questions::-webkit-scrollbar { width: 3px; }
   .quick-questions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
   .quick-btn {
-    padding: 0.65rem 0.85rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: var(--text-muted);
-    font-family: 'Syne', sans-serif;
-    font-size: 0.78rem;
-    cursor: pointer;
-    text-align: left;
-    line-height: 1.4;
-    transition: all 0.15s;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
+    padding: 0.6rem 0.8rem; background: transparent;
+    border: 1px solid transparent; border-radius: 7px;
+    color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 0.77rem;
+    cursor: pointer; text-align: left; line-height: 1.4; transition: all 0.15s;
+    display: flex; align-items: flex-start; gap: 0.45rem;
   }
+  .quick-btn:hover { background: var(--accent-soft); border-color: var(--border); color: var(--text); }
+  .quick-btn .qi { font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
 
-  .quick-btn:hover {
-    background: var(--accent-soft);
-    border-color: var(--border);
-    color: var(--text);
-  }
-
-  .quick-btn .qi { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
-
-  /* ── Stats Mini ── */
   .stats-mini {
-    padding: 0.75rem;
-    border-top: 1px solid var(--border);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    padding: 0.65rem; border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
   }
+  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 0.55rem 0.7rem; }
+  .stat-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
+  .stat-value { font-family: 'Syne Mono', monospace; font-size: 1rem; color: var(--accent); line-height: 1.2; }
+  .stat-unit  { font-size: 0.62rem; color: var(--text-muted); margin-left: 1px; }
 
-  .stat-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.6rem 0.75rem;
-  }
+  /* ── Tab Content Areas ── */
+  .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--bg); }
+  .tab-content.active { display: flex; }
 
-  .stat-label {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    font-weight: 700;
-    margin-bottom: 2px;
-  }
-
-  .stat-value {
-    font-family: 'Syne Mono', monospace;
-    font-size: 1.05rem;
-    font-weight: 400;
-    color: var(--accent);
-    line-height: 1.2;
-  }
-
-  .stat-unit {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    margin-left: 1px;
-  }
-
-  /* ── Chat Area ── */
-  .chat-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--bg);
-  }
-
+  /* ── Chat Tab ── */
   .messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    scroll-behavior: smooth;
+    flex: 1; overflow-y: auto; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem; scroll-behavior: smooth;
   }
-
   .messages::-webkit-scrollbar { width: 4px; }
   .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* ── Welcome Screen ── */
   .welcome {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 3rem;
-    gap: 1rem;
-    animation: fadeUp 0.4s ease both;
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 3rem; gap: 1rem; animation: fadeUp 0.4s ease both;
   }
-
   .welcome-icon { font-size: 3rem; line-height: 1; }
-
-  .welcome h2 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-
+  .welcome h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
   .welcome h2 em { color: var(--accent); font-style: normal; }
+  .welcome p { color: var(--text-muted); max-width: 360px; line-height: 1.6; font-size: 0.87rem; }
 
-  .welcome p {
-    color: var(--text-muted);
-    max-width: 360px;
-    line-height: 1.6;
-    font-size: 0.88rem;
-    font-weight: 400;
-  }
-
-  /* ── Messages ── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .message {
-    display: flex;
-    gap: 0.65rem;
-    animation: fadeUp 0.25s ease both;
-    max-width: 780px;
-  }
-
+  .message { display: flex; gap: 0.6rem; animation: fadeUp 0.25s ease both; max-width: 800px; }
   .message.user { flex-direction: row-reverse; align-self: flex-end; }
   .message.ai   { align-self: flex-start; }
 
   .avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    margin-top: 4px;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    width: 27px; height: 27px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; flex-shrink: 0; margin-top: 4px;
+    border: 1px solid var(--border); background: var(--surface);
   }
 
   .bubble {
-    padding: 0.85rem 1.1rem;
-    border-radius: 12px;
-    line-height: 1.65;
-    font-size: 0.875rem;
-    font-weight: 400;
-    border: 1px solid var(--border);
-    max-width: 100%;
-    box-shadow: var(--shadow);
+    padding: 0.8rem 1rem; border-radius: 12px;
+    line-height: 1.65; font-size: 0.875rem;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
   }
+  .message.ai   .bubble { background: var(--ai-bubble); border-top-left-radius: 3px; }
+  .message.user .bubble { background: var(--user-bubble); border-top-right-radius: 3px; border-color: rgba(212,82,26,0.2); }
 
-  .message.ai .bubble {
-    background: var(--ai-bubble);
-    border-top-left-radius: 3px;
-  }
-
-  .message.user .bubble {
-    background: var(--user-bubble);
-    border-top-right-radius: 3px;
-    border-color: rgba(212,82,26,0.2);
-  }
-
-  .bubble p { margin-bottom: 0.6rem; }
+  .bubble p { margin-bottom: 0.55rem; }
   .bubble p:last-child { margin-bottom: 0; }
-  .bubble ul, .bubble ol { padding-left: 1.2rem; margin-bottom: 0.6rem; }
-  .bubble li { margin-bottom: 0.25rem; }
+  .bubble ul, .bubble ol { padding-left: 1.2rem; margin-bottom: 0.55rem; }
+  .bubble li { margin-bottom: 0.2rem; }
   .bubble strong { color: var(--accent); font-weight: 700; }
-  .bubble h3 {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 0.5rem;
-    margin-top: 0.8rem;
-    letter-spacing: -0.01em;
-  }
+  .bubble h3 { font-size: 0.88rem; font-weight: 700; color: var(--accent); margin-bottom: 0.45rem; margin-top: 0.75rem; }
   .bubble h3:first-child { margin-top: 0; }
 
-  /* ── Typing Indicator ── */
-  .typing .bubble {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-    padding: 1rem 1.1rem;
-  }
-
-  .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 1.2s infinite;
-  }
-
+  .typing .bubble { display: flex; gap: 5px; align-items: center; padding: 0.9rem 1rem; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s infinite; }
   .dot:nth-child(2) { animation-delay: 0.2s; }
   .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100% { opacity:0.25; transform:scale(0.8); } 40% { opacity:1; transform:scale(1); } }
 
-  @keyframes pulse {
-    0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
-    40%           { opacity: 1;    transform: scale(1); }
-  }
-
-  /* ── Input Area ── */
   .input-area {
-    padding: 0.9rem 1.5rem 1.1rem;
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-    flex-shrink: 0;
+    padding: 0.85rem 1.5rem 1rem;
+    border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
   }
-
-  .input-row {
-    display: flex;
-    gap: 0.6rem;
-    align-items: flex-end;
-  }
+  .input-row { display: flex; gap: 0.55rem; align-items: flex-end; }
 
   textarea {
-    flex: 1;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.7rem 1rem;
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 0.875rem;
-    resize: none;
-    min-height: 44px;
-    max-height: 140px;
-    line-height: 1.5;
-    outline: none;
-    transition: border-color 0.15s;
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.65rem 0.95rem; color: var(--text);
+    font-family: 'Syne', sans-serif; font-size: 0.875rem;
+    resize: none; min-height: 42px; max-height: 140px; line-height: 1.5; outline: none; transition: border-color 0.15s;
   }
-
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: var(--text-muted); }
 
   .send-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 8px;
-    background: var(--accent);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.15s;
-    color: #fff;
-    font-size: 1.1rem;
+    width: 42px; height: 42px; border-radius: 8px; background: var(--accent);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s; color: #fff; font-size: 1.05rem;
   }
-
   .send-btn:hover   { filter: brightness(1.1); transform: scale(1.04); }
   .send-btn:active  { transform: scale(0.97); }
   .send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .input-hint { margin-top: 0.35rem; color: var(--text-muted); font-size: 0.63rem; letter-spacing: 0.04em; }
 
-  .input-hint {
-    margin-top: 0.4rem;
-    color: var(--text-muted);
-    font-size: 0.65rem;
-    letter-spacing: 0.04em;
+  /* ── Daten Tab ── */
+  .data-view {
+    flex: 1; overflow-y: auto; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  .data-view::-webkit-scrollbar { width: 4px; }
+  .data-view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .data-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    flex-shrink: 0;
   }
 
-  /* ── Responsive ── */
+  .data-toolbar-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-muted);
+  }
+
+  .data-reload-btn {
+    font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 5px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .data-reload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  .data-block {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; box-shadow: var(--shadow);
+  }
+
+  .data-block-header {
+    padding: 0.7rem 1rem;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .data-block-content {
+    padding: 1rem;
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+
+  .data-loading {
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem; color: var(--text-muted); font-size: 0.85rem; gap: 0.5rem;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.78rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12); animation: fadeUp 0.3s ease both;
+    z-index: 100; max-width: 280px;
+  }
+  .toast.ok  { border-color: var(--online); }
+  .toast.err { border-color: #c0392b; }
+
   @media (max-width: 640px) {
     .sidebar { display: none; }
-    header { padding: 0.75rem 1rem; }
-    .messages { padding: 1rem; }
-    .input-area { padding: 0.75rem 1rem; }
+    header { padding: 0.65rem 1rem; flex-wrap: wrap; }
     .logo-sub { display: none; }
   }
 </style>
@@ -474,26 +397,47 @@
 <body>
 <div class="app">
 
-  <!-- Header -->
   <header>
     <div class="header-left">
-      <span class="logo" style="color:var(--accent)">Ernie</span>
+      <span class="logo">Ernie</span>
       <span class="logo-sub">Persönlicher Gesundheitsberater · Garmin + YAZIO · Claude AI</span>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+        <button class="tab-btn" data-tab="data">📊 Daten</button>
+      </div>
     </div>
     <div class="header-right">
-      <div class="days-selector">
-        <button class="days-btn" data-days="7">7T</button>
-        <button class="days-btn" data-days="14">14T</button>
-        <button class="days-btn active" data-days="30">30T</button>
-        <button class="days-btn" data-days="60">60T</button>
+
+      <div class="timerange">
+        <div class="days-selector">
+          <button class="days-btn" data-days="7">7T</button>
+          <button class="days-btn" data-days="14">14T</button>
+          <button class="days-btn active" data-days="30">30T</button>
+          <button class="days-btn" data-days="60">60T</button>
+        </div>
+        <div class="timerange-divider"></div>
+        <div class="date-range">
+          <input type="date" id="dateFrom" title="Von">
+          <span class="date-sep">–</span>
+          <input type="date" id="dateTo" title="Bis">
+          <button class="date-apply-btn" id="dateApplyBtn">Los</button>
+        </div>
       </div>
-      <div class="status-bar" id="statusBar">
-        <span class="pill">Verbinde…</span>
+
+      <div class="header-actions">
+        <span class="last-sync" id="lastSync">–</span>
+        <button class="sync-btn" id="syncBtn">
+          <span class="sync-icon" id="syncIcon">↻</span>
+          Sync
+        </button>
+        <div class="status-bar" id="statusBar">
+          <span class="pill">Verbinde…</span>
+        </div>
       </div>
+
     </div>
   </header>
 
-  <!-- Main -->
   <div class="main">
 
     <!-- Sidebar -->
@@ -503,7 +447,7 @@
         <button class="quick-btn" data-q="Wie war meine Ernährungsentwicklung in den letzten 30 Tagen? Erkennst du Muster?">
           <span class="qi">📈</span>Ernährungstrends analysieren
         </button>
-        <button class="quick-btn" data-q="Wie hängen mein Schlaf und meine Ernährung zusammen? Schlafe ich besser wenn ich bestimmte Dinge esse?">
+        <button class="quick-btn" data-q="Wie hängen mein Schlaf und meine Ernährung zusammen?">
           <span class="qi">😴</span>Schlaf & Ernährung
         </button>
         <button class="quick-btn" data-q="An welchen Tagen war meine Body Battery besonders hoch oder niedrig? Was hat das beeinflusst?">
@@ -518,7 +462,7 @@
         <button class="quick-btn" data-q="Wie ist mein Kaloriengleichgewicht? Nehme ich zu oder ab basierend auf den Daten?">
           <span class="qi">⚖️</span>Kalorienbalance & Gewicht
         </button>
-        <button class="quick-btn" data-q="An welchen Wochentagen ist mein Stress-Level am höchsten? Wie beeinflusst das meine Ernährung und meinen Schlaf?">
+        <button class="quick-btn" data-q="An welchen Wochentagen ist mein Stress-Level am höchsten?">
           <span class="qi">🧘</span>Stress-Muster erkennen
         </button>
         <button class="quick-btn" data-q="Gib mir eine ehrliche Gesamtbewertung meiner Gesundheitsdaten mit den 3 wichtigsten Handlungsempfehlungen.">
@@ -526,7 +470,6 @@
         </button>
       </div>
 
-      <!-- Stats Mini -->
       <div class="stats-mini">
         <div class="stat-card">
           <div class="stat-label">Tage</div>
@@ -547,26 +490,34 @@
       </div>
     </aside>
 
-    <!-- Chat -->
-    <div class="chat-area">
+    <!-- Chat Tab -->
+    <div class="tab-content active" id="tab-chat">
       <div class="messages" id="messages">
         <div class="welcome" id="welcome">
           <div class="welcome-icon">🫀</div>
           <h2>Hallo, ich bin <em>Ernie</em></h2>
-          <p>Ich analysiere deine Garmin- und YAZIO-Daten und erkenne Muster in Ernährung, Schlaf, Aktivität und Energie. Stell mir eine Frage oder wähle ein Thema aus der Sidebar.</p>
+          <p>Ich analysiere deine Garmin- und YAZIO-Daten und erkenne Muster in Ernährung, Schlaf, Aktivität und Energie. Wähle einen Zeitraum oder stell mir direkt eine Frage.</p>
         </div>
       </div>
-
       <div class="input-area">
         <div class="input-row">
-          <textarea
-            id="input"
-            placeholder="Stell mir eine Frage zu deinen Gesundheitsdaten…"
-            rows="1"
-          ></textarea>
+          <textarea id="input" placeholder="Stell mir eine Frage zu deinen Gesundheitsdaten…" rows="1"></textarea>
           <button class="send-btn" id="sendBtn" title="Senden (Enter)">↑</button>
         </div>
         <div class="input-hint">Enter zum Senden · Shift+Enter für neue Zeile</div>
+      </div>
+    </div>
+
+    <!-- Daten Tab -->
+    <div class="tab-content" id="tab-data">
+      <div class="data-view">
+        <div class="data-toolbar">
+          <span class="data-toolbar-label">Kontext-Daten die Ernie sieht</span>
+          <button class="data-reload-btn" id="dataReloadBtn">↻ Neu laden</button>
+        </div>
+        <div id="dataContent">
+          <div class="data-loading">Daten werden geladen…</div>
+        </div>
       </div>
     </div>
 
@@ -577,7 +528,40 @@
   const API = `http://${window.location.hostname}:8765`;
   let messages = [];
   let selectedDays = 30;
+  let dateFrom = null;
+  let dateTo = null;
   let isLoading = false;
+  let isSyncing = false;
+  let activeTab = 'chat';
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'ok', duration = 3500) {
+    document.querySelectorAll('.toast').forEach(t => t.remove());
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), duration);
+  }
+
+  function formatLastSync(iso) {
+    if (!iso) return '–';
+    const d = new Date(iso);
+    return `Sync: ${d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})} ${d.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'})}`;
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      if (tab === 'data') loadDataView();
+    });
+  });
 
   // ── Status ────────────────────────────────────────────────────────────────
   async function checkStatus() {
@@ -594,6 +578,7 @@
         : `<span class="pill err">API Key fehlt</span>`;
       if (s.latest_date)
         bar.innerHTML += `<span class="pill">${s.latest_date}</span>`;
+      document.getElementById('lastSync').textContent = formatLastSync(s.last_sync);
       loadMiniStats();
     } catch {
       document.getElementById('statusBar').innerHTML =
@@ -612,13 +597,98 @@
         return m ? m[1] : '–';
       };
       document.getElementById('statKcal').textContent = extract('Kalorien');
-      document.getElementById('statSleep').innerHTML =
-        extract('Schlaf') + '<span class="stat-unit">h</span>';
+      document.getElementById('statSleep').innerHTML = extract('Schlaf') + '<span class="stat-unit">h</span>';
       const steps = extract('Schritte');
       document.getElementById('statSteps').textContent =
         steps !== '–' ? (parseInt(steps) / 1000).toFixed(1) + 'k' : '–';
     } catch {}
   }
+
+  // ── Daten Tab ─────────────────────────────────────────────────────────────
+  async function loadDataView() {
+    const container = document.getElementById('dataContent');
+    container.innerHTML = '<div class="data-loading">⏳ Lade Kontext-Daten…</div>';
+    try {
+      const r = await fetch(`${API}/context`);
+      const d = await r.json();
+      const ctx = d.context || '';
+
+      // Text in Sektionen aufteilen (## als Trenner)
+      const sections = ctx.split(/\n(?=## )/);
+      container.innerHTML = '';
+
+      sections.forEach(section => {
+        const lines = section.trim().split('\n');
+        const header = lines[0].replace(/^#+\s*/, '').trim();
+        const content = lines.slice(1).join('\n').trim();
+        if (!content) return;
+
+        const block = document.createElement('div');
+        block.className = 'data-block';
+
+        const blockHeader = document.createElement('div');
+        blockHeader.className = 'data-block-header';
+        blockHeader.textContent = header;
+
+        const blockContent = document.createElement('div');
+        blockContent.className = 'data-block-content';
+        blockContent.textContent = content;
+
+        block.appendChild(blockHeader);
+        block.appendChild(blockContent);
+        container.appendChild(block);
+      });
+
+      if (!container.children.length) {
+        container.innerHTML = '<div class="data-loading">Keine Daten verfügbar.</div>';
+      }
+    } catch {
+      container.innerHTML = '<div class="data-loading">Fehler beim Laden der Daten.</div>';
+    }
+  }
+
+  document.getElementById('dataReloadBtn').addEventListener('click', loadDataView);
+
+  // ── Sync ──────────────────────────────────────────────────────────────────
+  async function startSync() {
+    if (isSyncing) return;
+    isSyncing = true;
+    const btn = document.getElementById('syncBtn');
+    const icon = document.getElementById('syncIcon');
+    icon.classList.add('spinning');
+    btn.disabled = true;
+    showToast('Sync gestartet…', 'ok', 60000);
+
+    try {
+      await fetch(`${API}/sync`, { method: 'POST' });
+      const poll = setInterval(async () => {
+        try {
+          const r = await fetch(`${API}/sync/status`);
+          const s = await r.json();
+          if (!s.running) {
+            clearInterval(poll);
+            isSyncing = false;
+            icon.classList.remove('spinning');
+            btn.disabled = false;
+            document.querySelectorAll('.toast').forEach(t => t.remove());
+            const ok = s.log.every(l => l.includes('OK'));
+            showToast(ok ? '✓ Sync erfolgreich' : '⚠ Sync mit Fehlern', ok ? 'ok' : 'err');
+            document.getElementById('lastSync').textContent = formatLastSync(s.last_sync);
+            await checkStatus();
+            if (activeTab === 'data') loadDataView();
+          }
+        } catch { clearInterval(poll); }
+      }, 2000);
+    } catch {
+      isSyncing = false;
+      icon.classList.remove('spinning');
+      btn.disabled = false;
+      document.querySelectorAll('.toast').forEach(t => t.remove());
+      showToast('Sync fehlgeschlagen', 'err');
+    }
+  }
+
+  document.getElementById('syncBtn').addEventListener('click', startSync);
 
   // ── Days Selector ─────────────────────────────────────────────────────────
   document.querySelectorAll('.days-btn').forEach(btn => {
@@ -626,12 +696,32 @@
       document.querySelectorAll('.days-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedDays = parseInt(btn.dataset.days);
+      dateFrom = null; dateTo = null;
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      if (activeTab === 'data') loadDataView();
     });
   });
 
-  // ── Quick Questions ───────────────────────────────────────────────────────
+  // ── Date Range ────────────────────────────────────────────────────────────
+  document.getElementById('dateApplyBtn').addEventListener('click', () => {
+    const from = document.getElementById('dateFrom').value;
+    const to   = document.getElementById('dateTo').value;
+    if (!from || !to) { showToast('Bitte beide Daten auswählen', 'err'); return; }
+    if (from > to)    { showToast('Von-Datum muss vor Bis-Datum liegen', 'err'); return; }
+    dateFrom = from; dateTo = to;
+    document.querySelectorAll('.days-btn').forEach(b => b.classList.remove('active'));
+    showToast(`Zeitraum: ${from} bis ${to}`, 'ok', 2000);
+    if (activeTab === 'data') loadDataView();
+  });
+
+  // ── Quick Buttons ─────────────────────────────────────────────────────────
   document.querySelectorAll('.quick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      // Zum Chat-Tab wechseln falls nötig
+      if (activeTab !== 'chat') {
+        document.querySelector('[data-tab="chat"]').click();
+      }
       document.getElementById('input').value = btn.dataset.q;
       sendMessage();
     });
@@ -686,11 +776,15 @@
     renderMessage('user', text);
     messages.push({ role: 'user', content: text });
     showTyping();
+
+    const body = { messages, days: selectedDays };
+    if (dateFrom && dateTo) { body.date_from = dateFrom; body.date_to = dateTo; }
+
     try {
       const r = await fetch(`${API}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, days: selectedDays }),
+        body: JSON.stringify(body),
       });
       const data = await r.json();
       document.getElementById('typing')?.remove();
@@ -709,7 +803,7 @@
     input.focus();
   }
 
-  // ── Input Events ──────────────────────────────────────────────────────────
+  // ── Input ─────────────────────────────────────────────────────────────────
   const inp = document.getElementById('input');
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -721,6 +815,11 @@
   document.getElementById('sendBtn').addEventListener('click', sendMessage);
 
   // ── Init ──────────────────────────────────────────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  document.getElementById('dateTo').value = today;
+  document.getElementById('dateFrom').value = thirtyAgo;
+
   checkStatus();
 </script>
 </body>

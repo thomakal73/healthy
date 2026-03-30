@@ -362,6 +362,47 @@ def fetch_diary_day(auth: YazioAuth, conn: sqlite3.Connection, day: date):
             ))
             stored += 1
         time.sleep(0.1)
+    # ── Simple Products (KI/Foto-generiert) ──────────────────────────────────
+    simple_products = data.get("simple_products", []) or []
+    for item in simple_products:
+        entry_id = item.get("id", "")
+        meal_key = item.get("daytime", "snack")
+        if meal_key not in meal_kcal:
+            meal_key = "snack"
+
+        n_raw = item.get("nutrients", {}) or {}
+        # Bei simple_products sind Werte direkt in kcal/g (nicht per 100g)
+        n = {
+            "calories": float(n_raw.get("energy.energy", 0) or 0),
+            "protein":  float(n_raw.get("nutrient.protein", 0) or 0),
+            "carbs":    float(n_raw.get("nutrient.carb", 0) or 0),
+            "fat":      float(n_raw.get("nutrient.fat", 0) or 0),
+            "fiber":    float(n_raw.get("nutrient.dietaryfiber", 0) or 0),
+            "sugar":    float(n_raw.get("nutrient.sugar", 0) or 0),
+        }
+
+        for k in total:
+            total[k] += n[k]
+        meal_kcal[meal_key] += n["calories"]
+
+        if entry_id:
+            conn.execute("""
+                INSERT OR REPLACE INTO yazio_entries VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, (
+                entry_id, d, meal_key,
+                item.get("name"),
+                "KI/Foto",
+                None,  # amount_g nicht verfügbar
+                round(n["calories"], 2),
+                round(n["protein"], 2),
+                round(n["carbs"], 2),
+                round(n["fat"], 2),
+                round(n["fiber"], 2),
+                round(n["sugar"], 2),
+                json.dumps(item),
+                datetime.now().isoformat(),
+            ))
+            stored += 1
 
     conn.commit()
     log.info(
@@ -370,7 +411,7 @@ def fetch_diary_day(auth: YazioAuth, conn: sqlite3.Connection, day: date):
         f"P: {round(total['protein'])}g "
         f"C: {round(total['carbs'])}g "
         f"F: {round(total['fat'])}g | "
-        f"{stored} Einträge ({len(products)} Produkte, {len(recipe_portions)} Rezepte)"
+        f"{stored} Einträge ({len(products)} Produkte, {len(recipe_portions)} Rezepte, {len(simple_products)} KI/Foto)"
     )
     return total, meal_kcal
 

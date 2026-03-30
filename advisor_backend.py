@@ -16,6 +16,9 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import date, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+import subprocess
+import threading
+from datetime import date, timedelta, datetime
 
 load_dotenv()
 
@@ -24,24 +27,35 @@ ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 PORT          = 8765
 HISTORY_DAYS  = 30
 
+# ── Sync State ─────────────────────────────────────────────────────────────────
+_sync_running = False
+_sync_log = []
+_last_sync = None
 
 # ── Daten aus DB laden ─────────────────────────────────────────────────────────
-def load_combined_data(days: int = HISTORY_DAYS) -> list[dict]:
+def load_combined_data(days: int = HISTORY_DAYS, date_from: str = None, date_to: str = None) -> list[dict]:
     if not DB_PATH.exists():
         return []
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
-        rows = conn.execute("""
+        if date_from and date_to:
+            where = "WHERE COALESCE(g.date, y.date) BETWEEN ? AND ?"
+            params = (date_from, date_to)
+        else:
+            where = "WHERE COALESCE(g.date, y.date) >= date('now', ?)"
+            params = (f"-{days} days",)
+
+        rows = conn.execute(f"""
             SELECT
-                COALESCE(g.date, y.date)             AS date,
-                y.calories_eaten                      AS kcal_eaten,
+                COALESCE(g.date, y.date) AS date,
+                y.calories_eaten AS kcal_eaten,
                 y.protein_g, y.carbs_g, y.fat_g,
                 y.fiber_g, y.water_ml,
                 y.breakfast_kcal, y.lunch_kcal,
                 y.dinner_kcal, y.snacks_kcal,
                 g.steps,
-                g.active_calories                     AS kcal_burned,
+                g.active_calories AS kcal_burned,
                 g.active_minutes,
                 g.moderate_intensity_minutes,
                 g.vigorous_intensity_minutes,
@@ -49,29 +63,29 @@ def load_combined_data(days: int = HISTORY_DAYS) -> list[dict]:
                 g.body_battery_high,
                 g.body_battery_low,
                 g.stress_avg,
-                s.total_sleep_sec / 3600.0            AS sleep_hours,
-                s.deep_sleep_sec  / 3600.0            AS deep_sleep_hours,
-                s.rem_sleep_sec   / 3600.0            AS rem_sleep_hours,
+                s.total_sleep_sec / 3600.0 AS sleep_hours,
+                s.deep_sleep_sec / 3600.0 AS deep_sleep_hours,
+                s.rem_sleep_sec / 3600.0 AS rem_sleep_hours,
                 s.sleep_score,
-                COALESCE(w.weight_kg, bc.weight_kg)   AS weight_kg,
+                COALESCE(w.weight_kg, bc.weight_kg) AS weight_kg,
                 bc.body_fat_pct,
                 ts.training_readiness_score,
                 ts.vo2max_running,
                 ts.recovery_time_h,
                 CASE
-                  WHEN y.calories_eaten IS NOT NULL AND g.active_calories IS NOT NULL
-                  THEN y.calories_eaten - g.active_calories
-                  ELSE NULL
+                    WHEN y.calories_eaten IS NOT NULL AND g.active_calories IS NOT NULL
+                    THEN y.calories_eaten - g.active_calories
+                    ELSE NULL
                 END AS calorie_balance
             FROM daily_summary g
-            FULL OUTER JOIN yazio_daily y   ON g.date = y.date
-            LEFT JOIN sleep s               ON COALESCE(g.date, y.date) = s.date
-            LEFT JOIN yazio_weight w        ON COALESCE(g.date, y.date) = w.date
-            LEFT JOIN body_composition bc   ON COALESCE(g.date, y.date) = bc.date
-            LEFT JOIN training_status ts    ON COALESCE(g.date, y.date) = ts.date
-            WHERE COALESCE(g.date, y.date) >= date('now', ?)
+            FULL OUTER JOIN yazio_daily y ON g.date = y.date
+            LEFT JOIN sleep s ON COALESCE(g.date, y.date) = s.date
+            LEFT JOIN yazio_weight w ON COALESCE(g.date, y.date) = w.date
+            LEFT JOIN body_composition bc ON COALESCE(g.date, y.date) = bc.date
+            LEFT JOIN training_status ts ON COALESCE(g.date, y.date) = ts.date
+            {where}
             ORDER BY date DESC
-        """, (f"-{days} days",)).fetchall()
+        """, params).fetchall()
         return [dict(r) for r in rows]
     except Exception as e:
         print(f"DB error: {e}")
@@ -193,9 +207,41 @@ def load_activities(days: int = HISTORY_DAYS) -> list[dict]:
         conn.close()
 
 
-def build_context(days: int = HISTORY_DAYS) -> str:
-    """Kompakter Kontext-String für Claude."""
-    data = load_combined_data(days)
+def run_sync():
+    global _sync_running, _sync_log, _last_sync
+    _sync_running = True
+    _sync_log = []
+    scripts_dir = Path(__file__).parent
+    env_file = scripts_dir / "thomas" / ".env"
+
+    # Umgebungsvariablen aus .env laden
+    env = os.environ.copy()
+    if env_file.exists():
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    env[k.strip()] = v.strip()
+
+    for script in ["garmin_collector.py", "yazio_connector.py"]:
+        try:
+            result = subprocess.run(
+                ["python3", str(scripts_dir / script), "--days", "2"],
+                capture_output=True, text=True, env=env, timeout=120
+            )
+            _sync_log.append(f"{script}: OK" if result.returncode == 0 else f"{script}: FEHLER\n{result.stderr[-200:]}")
+        except subprocess.TimeoutExpired:
+            _sync_log.append(f"{script}: Timeout")
+        except Exception as e:
+            _sync_log.append(f"{script}: {e}")
+
+    _last_sync = datetime.now().isoformat()
+    _sync_running = False
+
+
+def build_context(days: int = HISTORY_DAYS, date_from: str = None, date_to: str = None) -> str:
+    data = load_combined_data(days, date_from, date_to)
     foods = load_top_foods(days)
 
     if not data:
@@ -260,7 +306,7 @@ def build_context(days: int = HISTORY_DAYS) -> str:
 
     # Tagesdaten Tabelle
     lines.append("## Tagesdaten (neueste zuerst)")
-    lines.append("Datum       | Kcal | Prot | Carb | Fett | Schritte | Schlaf | Score | HR  | BB    | Stress")
+    lines.append("Datum       | Kcal | Prot | Carb | Fett | Schritte | Schlaf | Score | HR  | BB    | Stress | Gewicht")
     lines.append("-" * 100)
     for r in data:
         bb = f"{r['body_battery_low'] or '?'}-{r['body_battery_high'] or '?'}" if r.get('body_battery_high') else "–"
@@ -276,7 +322,8 @@ def build_context(days: int = HISTORY_DAYS) -> str:
             f"{str(r['sleep_score'] or '–'):>5} | "
             f"{str(r['resting_hr'] or '–'):>3} | "
             f"{bb:>5} | "
-            f"{str(r['stress_avg'] or '–'):>6}"
+            f"{str(r['stress_avg'] or '–'):>6} | "
+            f"{(str(round(r['weight_kg'], 1)) + 'kg') if r.get('weight_kg') else '–':>8}"
         )
     lines.append("")
 
@@ -335,19 +382,12 @@ def build_context(days: int = HISTORY_DAYS) -> str:
     return "\n".join(lines)
 
 
-SYSTEM_PROMPT = """Du bist ein persönlicher Gesundheits- und Ernährungsberater für Thomas Kalinna (52 Jahre, männlich, 173cm, ~98kg).
-
-Du analysierst seine kombinierten Garmin-Bewegungs- und YAZIO-Ernährungsdaten der letzten 30 Tage.
-
-Deine Aufgaben:
-- Erkenne Muster und Entwicklungen über Zeit (nicht nur einzelne Tage)
-- Verbinde Ernährung mit Schlaf, Energie (Body Battery), Stress und Aktivität
-- Gib konkrete, personalisierte Empfehlungen basierend auf seinen echten Daten
-- Sei direkt und ehrlich, aber motivierend
-- Antworte auf Deutsch
-- Nutze die Daten aktiv in deinen Antworten (nenne konkrete Zahlen)
-
-Wichtig: Du hast Zugang zu echten Gesundheitsdaten. Nutze sie für präzise, individuelle Aussagen statt allgemeiner Ratschläge."""
+def load_system_prompt() -> str:
+    prompt_file = Path(__file__).parent / "thomas" / "system_prompt.md"
+    if prompt_file.exists():
+        return prompt_file.read_text(encoding="utf-8")
+    # Fallback
+    return "Du bist ein persönlicher Gesundheitsberater. Antworte auf Deutsch."
 
 
 # ── HTTP Handler ───────────────────────────────────────────────────────────────
@@ -379,6 +419,13 @@ class Handler(BaseHTTPRequestHandler):
                 "days_available": len(load_combined_data()),
                 "api_key_set": bool(ANTHROPIC_KEY),
                 "latest_date": data[0]["date"] if data else None,
+                "last_sync": _last_sync,
+            })
+        elif self.path == "/sync/status":
+            self._json({
+                "running": _sync_running,
+                "log": _sync_log,
+                "last_sync": _last_sync,
             })
         else:
             self.send_response(404)
@@ -387,13 +434,61 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/chat":
             length = int(self.headers.get("Content-Length", 0))
-            body   = json.loads(self.rfile.read(length))
-            messages  = body.get("messages", [])
-            days      = body.get("days", HISTORY_DAYS)
+            body = json.loads(self.rfile.read(length))
+            messages = body.get("messages", [])
+            days = body.get("days", HISTORY_DAYS)
+            date_from = body.get("date_from")
+            date_to = body.get("date_to")
 
             if not ANTHROPIC_KEY:
                 self._json({"error": "ANTHROPIC_API_KEY fehlt in .env"}, 500)
                 return
+
+            context = build_context(days, date_from, date_to)
+
+            full_messages = [
+                {"role": "user", "content": f"Hier sind meine aktuellen Gesundheitsdaten:\n\n{context}"},
+                {"role": "assistant", "content": "Ich habe deine Daten geladen und analysiert. Was möchtest du wissen?"},
+            ] + messages
+
+            try:
+                req_body = json.dumps({
+                    "model": "claude-sonnet-4-20250514",
+                    "max_tokens": 1500,
+                    "system": load_system_prompt(),
+                    "messages": full_messages,
+                }).encode()
+
+                req = urllib.request.Request(
+                    "https://api.anthropic.com/v1/messages",
+                    data=req_body,
+                    headers={
+                        "x-api-key": ANTHROPIC_KEY,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                    },
+                    method="POST",
+                )
+
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    result = json.loads(resp.read())
+
+                reply = result["content"][0]["text"]
+                self._json({"reply": reply})
+
+            except urllib.error.HTTPError as e:
+                err = e.read().decode()
+                self._json({"error": f"Claude API Fehler: {err}"}, 500)
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+        elif self.path == "/sync":
+            if _sync_running:
+                self._json({"status": "running", "message": "Sync läuft bereits"})
+                return
+            thread = threading.Thread(target=run_sync, daemon=True)
+            thread.start()
+            self._json({"status": "started", "message": "Sync gestartet"})
 
             context = build_context(days)
 
@@ -407,7 +502,7 @@ class Handler(BaseHTTPRequestHandler):
                 req_body = json.dumps({
                     "model": "claude-sonnet-4-20250514",
                     "max_tokens": 1500,
-                    "system": SYSTEM_PROMPT,
+                    "system": load_system_prompt(),
                     "messages": full_messages,
                 }).encode()
 
@@ -431,6 +526,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"error": f"Claude API Fehler: {err}"}, 500)
             except Exception as e:
                 self._json({"error": str(e)}, 500)
+
+        elif self.path == "/sync":
+            if _sync_running:
+                self._json({"status": "running", "message": "Sync läuft bereits"})
+                return
+            thread = threading.Thread(target=run_sync, daemon=True)
+            thread.start()
+            self._json({"status": "started", "message": "Sync gestartet"})
 
     def _serve_file(self, filename, content_type):
         path = Path(filename)
