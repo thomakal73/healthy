@@ -6,6 +6,7 @@
 <title>Ernie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --bg:           #f5f3ef;
@@ -21,6 +22,11 @@
     --user-bubble:  #f0e8e1;
     --ai-bubble:    #ffffff;
     --shadow:       0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --chart-1: #d4521a;
+    --chart-2: #2d7d9a;
+    --chart-3: #2d9e6b;
+    --chart-4: #c9912a;
+    --chart-5: #8b5cf6;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -43,139 +49,43 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-
   .app { display: flex; flex-direction: column; height: 100vh; }
 
   /* ── Header ── */
   header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1.5rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    gap: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.5rem; background: var(--surface);
+    border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 1rem;
   }
 
   .header-left { display: flex; align-items: center; gap: 1.2rem; }
-
   .logo { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+  .logo-sub { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
 
-  .logo-sub {
-    font-family: 'Syne Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  /* ── Tabs ── */
-  .tabs {
-    display: flex;
-    gap: 2px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 3px;
-  }
-
-  .tab-btn {
-    padding: 4px 14px;
-    border-radius: 5px;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.02em;
-  }
+  .tabs { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 3px; }
+  .tab-btn { padding: 4px 14px; border-radius: 5px; font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
   .tab-btn:hover { color: var(--text); }
   .tab-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
   .header-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; }
 
-  /* ── Zeitraum ── */
-  .timerange {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.3rem 0.5rem;
-  }
-
+  .timerange { display: flex; align-items: center; gap: 0.5rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.3rem 0.5rem; }
   .days-selector { display: flex; gap: 2px; }
-
-  .days-btn {
-    padding: 3px 9px;
-    border-radius: 4px;
-    font-family: 'Syne Mono', monospace;
-    font-size: 0.68rem;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-weight: 600;
-  }
+  .days-btn { padding: 3px 9px; border-radius: 4px; font-family: 'Syne Mono', monospace; font-size: 0.68rem; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-weight: 600; }
   .days-btn:hover { color: var(--accent); }
   .days-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-
   .timerange-divider { width: 1px; height: 1.2rem; background: var(--border); }
-
   .date-range { display: flex; align-items: center; gap: 0.35rem; }
-
-  .date-range input[type="date"] {
-    font-family: 'Syne Mono', monospace;
-    font-size: 0.68rem;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    outline: none;
-    padding: 2px 4px;
-    border-radius: 3px;
-    transition: background 0.15s;
-    color-scheme: light dark;
-  }
+  .date-range input[type="date"] { font-family: 'Syne Mono', monospace; font-size: 0.68rem; border: none; background: transparent; color: var(--text-muted); cursor: pointer; outline: none; padding: 2px 4px; border-radius: 3px; transition: background 0.15s; color-scheme: light dark; }
   .date-range input[type="date"]:hover { background: var(--surface); color: var(--text); }
   .date-range input[type="date"]:focus { background: var(--surface); color: var(--accent); }
   .date-sep { font-family: 'Syne Mono', monospace; font-size: 0.65rem; color: var(--text-muted); }
-
-  .date-apply-btn {
-    font-family: 'Syne', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent);
-    cursor: pointer;
-    transition: all 0.15s;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+  .date-apply-btn { font-family: 'Syne', sans-serif; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.05em; }
   .date-apply-btn:hover { background: var(--accent); color: white; }
 
-  /* ── Sync + Status ── */
   .header-actions { display: flex; align-items: center; gap: 0.5rem; }
-
   .last-sync { font-family: 'Syne Mono', monospace; font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; }
-
-  .sync-btn {
-    display: flex; align-items: center; gap: 0.35rem;
-    font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
-    padding: 4px 10px; border-radius: 6px;
-    border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted);
-    cursor: pointer; transition: all 0.15s;
-    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
-  }
+  .sync-btn { display: flex; align-items: center; gap: 0.35rem; font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
   .sync-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .sync-btn:disabled { opacity: 0.55; cursor: not-allowed; }
   .sync-icon { font-size: 0.85rem; display: inline-block; }
@@ -183,106 +93,54 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .status-bar { display: flex; gap: 5px; align-items: center; }
-
-  .pill {
-    padding: 3px 8px; border-radius: 20px;
-    font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.03em;
-    border: 1px solid var(--border); color: var(--text-muted); background: var(--surface2); white-space: nowrap;
-  }
+  .pill { padding: 3px 8px; border-radius: 20px; font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.03em; border: 1px solid var(--border); color: var(--text-muted); background: var(--surface2); white-space: nowrap; }
   .pill.ok   { border-color: var(--online); color: var(--online); background: transparent; }
   .pill.err  { border-color: #c0392b; color: #c0392b; background: transparent; }
-  .pill.warn { border-color: #c9912a; color: #c9912a; background: transparent; }
 
   /* ── Main ── */
   .main { display: flex; flex: 1; overflow: hidden; }
 
   /* ── Sidebar ── */
-  .sidebar {
-    width: 255px; border-right: 1px solid var(--border);
-    background: var(--surface); display: flex; flex-direction: column;
-    flex-shrink: 0; overflow: hidden;
-  }
-
-  .sidebar-section {
-    padding: 0.85rem 1rem 0.5rem;
-    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em;
-    color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border);
-  }
-
-  .quick-questions {
-    padding: 0.5rem; flex: 1; overflow-y: auto;
-    display: flex; flex-direction: column; gap: 3px;
-  }
+  .sidebar { width: 255px; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+  .sidebar-section { padding: 0.85rem 1rem 0.5rem; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border); }
+  .quick-questions { padding: 0.5rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
   .quick-questions::-webkit-scrollbar { width: 3px; }
   .quick-questions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .quick-btn {
-    padding: 0.6rem 0.8rem; background: transparent;
-    border: 1px solid transparent; border-radius: 7px;
-    color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 0.77rem;
-    cursor: pointer; text-align: left; line-height: 1.4; transition: all 0.15s;
-    display: flex; align-items: flex-start; gap: 0.45rem;
-  }
+  .quick-btn { padding: 0.6rem 0.8rem; background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 0.77rem; cursor: pointer; text-align: left; line-height: 1.4; transition: all 0.15s; display: flex; align-items: flex-start; gap: 0.45rem; }
   .quick-btn:hover { background: var(--accent-soft); border-color: var(--border); color: var(--text); }
   .quick-btn .qi { font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
 
-  .stats-mini {
-    padding: 0.65rem; border-top: 1px solid var(--border);
-    display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-  }
+  .stats-mini { padding: 0.65rem; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
   .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 0.55rem 0.7rem; }
   .stat-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
   .stat-value { font-family: 'Syne Mono', monospace; font-size: 1rem; color: var(--accent); line-height: 1.2; }
-  .stat-unit  { font-size: 0.62rem; color: var(--text-muted); margin-left: 1px; }
+  .stat-unit { font-size: 0.62rem; color: var(--text-muted); margin-left: 1px; }
 
-  /* ── Tab Content Areas ── */
+  /* ── Tab Content ── */
   .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--bg); }
   .tab-content.active { display: flex; }
 
   /* ── Chat Tab ── */
-  .messages {
-    flex: 1; overflow-y: auto; padding: 1.5rem;
-    display: flex; flex-direction: column; gap: 1rem; scroll-behavior: smooth;
-  }
+  .messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; scroll-behavior: smooth; }
   .messages::-webkit-scrollbar { width: 4px; }
   .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .welcome {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center;
-    padding: 3rem; gap: 1rem; animation: fadeUp 0.4s ease both;
-  }
+  .welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem; gap: 1rem; animation: fadeUp 0.4s ease both; }
   .welcome-icon { font-size: 3rem; line-height: 1; }
   .welcome h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
   .welcome h2 em { color: var(--accent); font-style: normal; }
   .welcome p { color: var(--text-muted); max-width: 360px; line-height: 1.6; font-size: 0.87rem; }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   .message { display: flex; gap: 0.6rem; animation: fadeUp 0.25s ease both; max-width: 800px; }
   .message.user { flex-direction: row-reverse; align-self: flex-end; }
   .message.ai   { align-self: flex-start; }
-
-  .avatar {
-    width: 27px; height: 27px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem; flex-shrink: 0; margin-top: 4px;
-    border: 1px solid var(--border); background: var(--surface);
-  }
-
-  .bubble {
-    padding: 0.8rem 1rem; border-radius: 12px;
-    line-height: 1.65; font-size: 0.875rem;
-    border: 1px solid var(--border); box-shadow: var(--shadow);
-  }
+  .avatar { width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; margin-top: 4px; border: 1px solid var(--border); background: var(--surface); }
+  .bubble { padding: 0.8rem 1rem; border-radius: 12px; line-height: 1.65; font-size: 0.875rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
   .message.ai   .bubble { background: var(--ai-bubble); border-top-left-radius: 3px; }
   .message.user .bubble { background: var(--user-bubble); border-top-right-radius: 3px; border-color: rgba(212,82,26,0.2); }
-
-  .bubble p { margin-bottom: 0.55rem; }
-  .bubble p:last-child { margin-bottom: 0; }
+  .bubble p { margin-bottom: 0.55rem; } .bubble p:last-child { margin-bottom: 0; }
   .bubble ul, .bubble ol { padding-left: 1.2rem; margin-bottom: 0.55rem; }
   .bubble li { margin-bottom: 0.2rem; }
   .bubble strong { color: var(--accent); font-weight: 700; }
@@ -295,103 +153,68 @@
   .dot:nth-child(3) { animation-delay: 0.4s; }
   @keyframes pulse { 0%,80%,100% { opacity:0.25; transform:scale(0.8); } 40% { opacity:1; transform:scale(1); } }
 
-  .input-area {
-    padding: 0.85rem 1.5rem 1rem;
-    border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
-  }
+  .input-area { padding: 0.85rem 1.5rem 1rem; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
   .input-row { display: flex; gap: 0.55rem; align-items: flex-end; }
-
-  textarea {
-    flex: 1; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 0.65rem 0.95rem; color: var(--text);
-    font-family: 'Syne', sans-serif; font-size: 0.875rem;
-    resize: none; min-height: 42px; max-height: 140px; line-height: 1.5; outline: none; transition: border-color 0.15s;
-  }
+  textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.95rem; color: var(--text); font-family: 'Syne', sans-serif; font-size: 0.875rem; resize: none; min-height: 42px; max-height: 140px; line-height: 1.5; outline: none; transition: border-color 0.15s; }
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: var(--text-muted); }
-
-  .send-btn {
-    width: 42px; height: 42px; border-radius: 8px; background: var(--accent);
-    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: all 0.15s; color: #fff; font-size: 1.05rem;
-  }
-  .send-btn:hover   { filter: brightness(1.1); transform: scale(1.04); }
-  .send-btn:active  { transform: scale(0.97); }
+  .send-btn { width: 42px; height: 42px; border-radius: 8px; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; color: #fff; font-size: 1.05rem; }
+  .send-btn:hover { filter: brightness(1.1); transform: scale(1.04); }
+  .send-btn:active { transform: scale(0.97); }
   .send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
   .input-hint { margin-top: 0.35rem; color: var(--text-muted); font-size: 0.63rem; letter-spacing: 0.04em; }
 
   /* ── Daten Tab ── */
-  .data-view {
-    flex: 1; overflow-y: auto; padding: 1.5rem;
-    display: flex; flex-direction: column; gap: 1rem;
-  }
+  .data-view { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
   .data-view::-webkit-scrollbar { width: 4px; }
   .data-view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .data-toolbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.75rem 1rem;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    flex-shrink: 0;
-  }
-
-  .data-toolbar-label {
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.1em; color: var(--text-muted);
-  }
-
-  .data-reload-btn {
-    font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
-    padding: 3px 10px; border-radius: 5px;
-    border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted);
-    cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.05em;
-  }
+  .data-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; flex-shrink: 0; }
+  .data-toolbar-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .data-reload-btn { font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.05em; }
   .data-reload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .data-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
+  .data-block-header { padding: 0.7rem 1rem; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .data-block-content { padding: 1rem; font-family: 'Syne Mono', monospace; font-size: 0.72rem; line-height: 1.7; color: var(--text); white-space: pre-wrap; overflow-x: auto; }
+  .data-loading { display: flex; align-items: center; justify-content: center; padding: 3rem; color: var(--text-muted); font-size: 0.85rem; }
 
-  .data-block {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; overflow: hidden; box-shadow: var(--shadow);
-  }
+  /* ── Dashboard Tab ── */
+  .dashboard-view { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; }
+  .dashboard-view::-webkit-scrollbar { width: 4px; }
+  .dashboard-view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .data-block-header {
-    padding: 0.7rem 1rem;
-    background: var(--surface2); border-bottom: 1px solid var(--border);
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.1em; color: var(--text-muted);
-    display: flex; align-items: center; justify-content: space-between;
-  }
+  .dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .dash-grid.wide { grid-template-columns: 1fr; }
 
-  .data-block-content {
-    padding: 1rem;
-    font-family: 'Syne Mono', monospace;
-    font-size: 0.72rem;
-    line-height: 1.7;
-    color: var(--text);
-    white-space: pre-wrap;
-    overflow-x: auto;
-  }
+  .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .dash-card-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .dash-card-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .dash-card-value { font-family: 'Syne Mono', monospace; font-size: 0.75rem; color: var(--accent); }
+  .dash-card-body { padding: 0.75rem 1rem; position: relative; height: 180px; }
+  .dash-card-body.tall { height: 220px; }
 
-  .data-loading {
-    display: flex; align-items: center; justify-content: center;
-    padding: 3rem; color: var(--text-muted); font-size: 0.85rem; gap: 0.5rem;
-  }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem; }
+  .kpi-value { font-family: 'Syne Mono', monospace; font-size: 1.4rem; color: var(--accent); line-height: 1; }
+  .kpi-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.2rem; }
+  .kpi-trend { font-size: 0.7rem; margin-left: 4px; }
+  .kpi-trend.up { color: var(--online); }
+  .kpi-trend.down { color: #c0392b; }
+
+  .act-list { padding: 0.5rem 0; }
+  .act-item { display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
+  .act-item:last-child { border-bottom: none; }
+  .act-name { font-weight: 600; color: var(--text); }
+  .act-meta { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: var(--text-muted); }
+  .act-date { font-family: 'Syne Mono', monospace; font-size: 0.65rem; color: var(--text-muted); }
 
   /* ── Toast ── */
-  .toast {
-    position: fixed; bottom: 1.5rem; right: 1.5rem;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.78rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.12); animation: fadeUp 0.3s ease both;
-    z-index: 100; max-width: 280px;
-  }
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.78rem; box-shadow: 0 4px 20px rgba(0,0,0,0.12); animation: fadeUp 0.3s ease both; z-index: 100; max-width: 280px; }
   .toast.ok  { border-color: var(--online); }
   .toast.err { border-color: #c0392b; }
 
-  @media (max-width: 640px) {
-    .sidebar { display: none; }
-    header { padding: 0.65rem 1rem; flex-wrap: wrap; }
-    .logo-sub { display: none; }
-  }
+  @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) { .sidebar { display: none; } header { padding: 0.65rem 1rem; flex-wrap: wrap; } .logo-sub { display: none; } }
 </style>
 </head>
 <body>
@@ -403,11 +226,11 @@
       <span class="logo-sub">Persönlicher Gesundheitsberater · Garmin + YAZIO · Claude AI</span>
       <div class="tabs">
         <button class="tab-btn active" data-tab="chat">💬 Chat</button>
-        <button class="tab-btn" data-tab="data">📊 Daten</button>
+        <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
+        <button class="tab-btn" data-tab="data">🗃 Daten</button>
       </div>
     </div>
     <div class="header-right">
-
       <div class="timerange">
         <div class="days-selector">
           <button class="days-btn" data-days="7">7T</button>
@@ -423,18 +246,11 @@
           <button class="date-apply-btn" id="dateApplyBtn">Los</button>
         </div>
       </div>
-
       <div class="header-actions">
         <span class="last-sync" id="lastSync">–</span>
-        <button class="sync-btn" id="syncBtn">
-          <span class="sync-icon" id="syncIcon">↻</span>
-          Sync
-        </button>
-        <div class="status-bar" id="statusBar">
-          <span class="pill">Verbinde…</span>
-        </div>
+        <button class="sync-btn" id="syncBtn"><span class="sync-icon" id="syncIcon">↻</span> Sync</button>
+        <div class="status-bar" id="statusBar"><span class="pill">Verbinde…</span></div>
       </div>
-
     </div>
   </header>
 
@@ -444,49 +260,20 @@
     <aside class="sidebar">
       <div class="sidebar-section">Schnellfragen</div>
       <div class="quick-questions">
-        <button class="quick-btn" data-q="Wie war meine Ernährungsentwicklung in den letzten 30 Tagen? Erkennst du Muster?">
-          <span class="qi">📈</span>Ernährungstrends analysieren
-        </button>
-        <button class="quick-btn" data-q="Wie hängen mein Schlaf und meine Ernährung zusammen?">
-          <span class="qi">😴</span>Schlaf & Ernährung
-        </button>
-        <button class="quick-btn" data-q="An welchen Tagen war meine Body Battery besonders hoch oder niedrig? Was hat das beeinflusst?">
-          <span class="qi">⚡</span>Body Battery Analyse
-        </button>
-        <button class="quick-btn" data-q="Wie entwickeln sich meine Aktivitätsdaten? Werde ich aktiver oder weniger aktiv?">
-          <span class="qi">🏃</span>Aktivitätsentwicklung
-        </button>
-        <button class="quick-btn" data-q="Was sollte ich an meiner Ernährung konkret ändern um mehr Energie zu haben?">
-          <span class="qi">🥗</span>Ernährungsoptimierung
-        </button>
-        <button class="quick-btn" data-q="Wie ist mein Kaloriengleichgewicht? Nehme ich zu oder ab basierend auf den Daten?">
-          <span class="qi">⚖️</span>Kalorienbalance & Gewicht
-        </button>
-        <button class="quick-btn" data-q="An welchen Wochentagen ist mein Stress-Level am höchsten?">
-          <span class="qi">🧘</span>Stress-Muster erkennen
-        </button>
-        <button class="quick-btn" data-q="Gib mir eine ehrliche Gesamtbewertung meiner Gesundheitsdaten mit den 3 wichtigsten Handlungsempfehlungen.">
-          <span class="qi">🎯</span>Gesamtbewertung & Empfehlungen
-        </button>
+        <button class="quick-btn" data-q="Wie war meine Ernährungsentwicklung in den letzten 30 Tagen? Erkennst du Muster?"><span class="qi">📈</span>Ernährungstrends</button>
+        <button class="quick-btn" data-q="Wie hängen mein Schlaf und meine Ernährung zusammen?"><span class="qi">😴</span>Schlaf & Ernährung</button>
+        <button class="quick-btn" data-q="An welchen Tagen war meine Body Battery besonders hoch oder niedrig? Was hat das beeinflusst?"><span class="qi">⚡</span>Body Battery</button>
+        <button class="quick-btn" data-q="Wie entwickeln sich meine Aktivitätsdaten? Werde ich aktiver oder weniger aktiv?"><span class="qi">🏃</span>Aktivitätsentwicklung</button>
+        <button class="quick-btn" data-q="Was sollte ich an meiner Ernährung konkret ändern um mehr Energie zu haben?"><span class="qi">🥗</span>Ernährungsoptimierung</button>
+        <button class="quick-btn" data-q="Wie ist mein Kaloriengleichgewicht? Nehme ich zu oder ab basierend auf den Daten?"><span class="qi">⚖️</span>Kalorienbalance & Gewicht</button>
+        <button class="quick-btn" data-q="An welchen Wochentagen ist mein Stress-Level am höchsten?"><span class="qi">🧘</span>Stress-Muster</button>
+        <button class="quick-btn" data-q="Gib mir eine ehrliche Gesamtbewertung meiner Gesundheitsdaten mit den 3 wichtigsten Handlungsempfehlungen."><span class="qi">🎯</span>Gesamtbewertung</button>
       </div>
-
       <div class="stats-mini">
-        <div class="stat-card">
-          <div class="stat-label">Tage</div>
-          <div class="stat-value" id="statDays">–</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Ø Kcal</div>
-          <div class="stat-value" id="statKcal">–</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Ø Schlaf</div>
-          <div class="stat-value" id="statSleep">–<span class="stat-unit">h</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Ø Schritte</div>
-          <div class="stat-value" id="statSteps">–</div>
-        </div>
+        <div class="stat-card"><div class="stat-label">Tage</div><div class="stat-value" id="statDays">–</div></div>
+        <div class="stat-card"><div class="stat-label">Ø Kcal</div><div class="stat-value" id="statKcal">–</div></div>
+        <div class="stat-card"><div class="stat-label">Ø Schlaf</div><div class="stat-value" id="statSleep">–<span class="stat-unit">h</span></div></div>
+        <div class="stat-card"><div class="stat-label">Ø Schritte</div><div class="stat-value" id="statSteps">–</div></div>
       </div>
     </aside>
 
@@ -496,7 +283,7 @@
         <div class="welcome" id="welcome">
           <div class="welcome-icon">🫀</div>
           <h2>Hallo, ich bin <em>Ernie</em></h2>
-          <p>Ich analysiere deine Garmin- und YAZIO-Daten und erkenne Muster in Ernährung, Schlaf, Aktivität und Energie. Wähle einen Zeitraum oder stell mir direkt eine Frage.</p>
+          <p>Ich analysiere deine Garmin- und YAZIO-Daten und erkenne Muster in Ernährung, Schlaf, Aktivität und Energie.</p>
         </div>
       </div>
       <div class="input-area">
@@ -508,6 +295,13 @@
       </div>
     </div>
 
+    <!-- Dashboard Tab -->
+    <div class="tab-content" id="tab-dashboard">
+      <div class="dashboard-view" id="dashboardView">
+        <div class="data-loading">⏳ Dashboard wird geladen…</div>
+      </div>
+    </div>
+
     <!-- Daten Tab -->
     <div class="tab-content" id="tab-data">
       <div class="data-view">
@@ -515,9 +309,7 @@
           <span class="data-toolbar-label">Kontext-Daten die Ernie sieht</span>
           <button class="data-reload-btn" id="dataReloadBtn">↻ Neu laden</button>
         </div>
-        <div id="dataContent">
-          <div class="data-loading">Daten werden geladen…</div>
-        </div>
+        <div id="dataContent"><div class="data-loading">Daten werden geladen…</div></div>
       </div>
     </div>
 
@@ -533,6 +325,7 @@
   let isLoading = false;
   let isSyncing = false;
   let activeTab = 'chat';
+  let charts = {};
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   function showToast(msg, type = 'ok', duration = 3500) {
@@ -550,6 +343,273 @@
     return `Sync: ${d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})} ${d.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'})}`;
   }
 
+  // ── Chart defaults ────────────────────────────────────────────────────────
+  function chartDefaults() {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return {
+      gridColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+      textColor: isDark ? '#9a9590' : '#4a4642',
+      accent: isDark ? '#e06030' : '#d4521a',
+    };
+  }
+
+  function baseOptions(yLabel = '') {
+    const { gridColor, textColor } = chartDefaults();
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { bodyFont: { family: 'Syne Mono' }, titleFont: { family: 'Syne' } } },
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 }, maxRotation: 45 } },
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 } }, title: yLabel ? { display: true, text: yLabel, color: textColor, font: { family: 'Syne', size: 10 } } : { display: false } }
+      }
+    };
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    const view = document.getElementById('dashboardView');
+    view.innerHTML = '<div class="data-loading">⏳ Lade Dashboard…</div>';
+
+    // Destroy existing charts
+    Object.values(charts).forEach(c => c.destroy());
+    charts = {};
+
+    try {
+      let url = `${API}/dashboard?days=${selectedDays}`;
+      if (dateFrom && dateTo) url = `${API}/dashboard?date_from=${dateFrom}&date_to=${dateTo}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      const days = [...d.days].reverse(); // älteste zuerst
+      const acts = d.activities || [];
+
+      const labels = days.map(r => r.date.slice(5)); // MM-DD
+
+      // Durchschnitte
+      const avg = key => {
+        const vals = days.map(r => r[key]).filter(v => v != null && v !== 0);
+        return vals.length ? Math.round(vals.reduce((a,b) => a+b, 0) / vals.length * 10) / 10 : 0;
+      };
+
+      view.innerHTML = '';
+
+      // ── KPIs ──
+      const kpiGrid = document.createElement('div');
+      kpiGrid.className = 'kpi-grid';
+
+      const kpis = [
+        { label: 'Ø Kalorien', value: avg('kcal_eaten'), unit: 'kcal' },
+        { label: 'Ø Schritte', value: avg('steps').toLocaleString('de-DE'), unit: '' },
+        { label: 'Ø Schlaf', value: avg('sleep_hours'), unit: 'h' },
+        { label: 'Ø Gewicht', value: avg('weight_kg'), unit: 'kg' },
+        { label: 'Ø Body Battery', value: `${Math.round(avg('body_battery_low'))}-${Math.round(avg('body_battery_high'))}`, unit: '' },
+        { label: 'Ø Schlaf-Score', value: avg('sleep_score'), unit: '/100' },
+        { label: 'Ø Stress', value: avg('stress_avg'), unit: '/100' },
+        { label: 'Ø Ruhepuls', value: avg('resting_hr'), unit: 'bpm' },
+      ];
+
+      kpis.forEach(k => {
+        const card = document.createElement('div');
+        card.className = 'kpi-card';
+        card.innerHTML = `<div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}<span class="stat-unit">${k.unit}</span></div>`;
+        kpiGrid.appendChild(card);
+      });
+      view.appendChild(kpiGrid);
+
+      // ── Charts Grid ──
+      const grid = document.createElement('div');
+      grid.className = 'dash-grid';
+      view.appendChild(grid);
+
+      const makeCard = (title, avgText, tall = false) => {
+        const card = document.createElement('div');
+        card.className = 'dash-card';
+        const id = 'chart-' + Math.random().toString(36).slice(2);
+        card.innerHTML = `
+          <div class="dash-card-header">
+            <span class="dash-card-title">${title}</span>
+            <span class="dash-card-value">${avgText}</span>
+          </div>
+          <div class="dash-card-body${tall ? ' tall' : ''}">
+            <canvas id="${id}"></canvas>
+          </div>`;
+        return { card, id };
+      };
+
+      const { accent, gridColor, textColor } = chartDefaults();
+
+      // 1. Gewicht
+      {
+        const { card, id } = makeCard('Gewichtsverlauf', `Ø ${avg('weight_kg')} kg`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [{ data: days.map(r => r.weight_kg), borderColor: accent, backgroundColor: accent + '18', tension: 0.3, pointRadius: 3, fill: true }]
+            },
+            options: { ...baseOptions('kg'), plugins: { legend: { display: false } } }
+          });
+        }, 50);
+      }
+
+      // 2. Kalorien
+      {
+        const { card, id } = makeCard('Kalorien pro Tag', `Ø ${avg('kcal_eaten')} kcal`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{ data: days.map(r => r.kcal_eaten || 0), backgroundColor: accent + 'cc', borderRadius: 4 }]
+            },
+            options: baseOptions('kcal')
+          });
+        }, 50);
+      }
+
+      // 3. Makros
+      {
+        const { card, id } = makeCard('Makros pro Tag', `P · C · F`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [
+                { label: 'Protein', data: days.map(r => r.protein_g || 0), backgroundColor: '#2d9e6b99', borderRadius: 2 },
+                { label: 'Carbs',   data: days.map(r => r.carbs_g   || 0), backgroundColor: '#2d7d9a99', borderRadius: 2 },
+                { label: 'Fett',    data: days.map(r => r.fat_g     || 0), backgroundColor: '#c9912a99', borderRadius: 2 },
+              ]
+            },
+            options: { ...baseOptions('g'), plugins: { legend: { display: true, labels: { color: textColor, font: { family: 'Syne Mono', size: 10 }, boxWidth: 10 } } }, scales: { x: { stacked: true, grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 }, maxRotation: 45 } }, y: { stacked: true, grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 } } } } }
+          });
+        }, 50);
+      }
+
+      // 4. Schritte
+      {
+        const { card, id } = makeCard('Schritte pro Tag', `Ø ${avg('steps').toLocaleString('de-DE')}`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{ data: days.map(r => r.steps || 0), backgroundColor: '#2d7d9acc', borderRadius: 4 }]
+            },
+            options: baseOptions('Schritte')
+          });
+        }, 50);
+      }
+
+      // 5. Schlaf & Score
+      {
+        const { card, id } = makeCard('Schlaf & Score', `Ø ${avg('sleep_hours')}h · Score ${avg('sleep_score')}`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [
+                { label: 'Schlaf (h)', data: days.map(r => r.sleep_hours ? Math.round(r.sleep_hours * 10) / 10 : null), backgroundColor: '#8b5cf699', borderRadius: 4, yAxisID: 'y' },
+                { label: 'Score', data: days.map(r => r.sleep_score), type: 'line', borderColor: accent, backgroundColor: 'transparent', tension: 0.3, pointRadius: 3, yAxisID: 'y1' },
+              ]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: true, labels: { color: textColor, font: { family: 'Syne Mono', size: 10 }, boxWidth: 10 } } },
+              scales: {
+                x: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 }, maxRotation: 45 } },
+                y: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 } }, title: { display: true, text: 'h', color: textColor } },
+                y1: { position: 'right', grid: { display: false }, ticks: { color: textColor, font: { family: 'Syne Mono', size: 10 } }, min: 0, max: 100, title: { display: true, text: 'Score', color: textColor } }
+              }
+            }
+          });
+        }, 50);
+      }
+
+      // 6. Body Battery
+      {
+        const { card, id } = makeCard('Body Battery', `Min / Max pro Tag`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [
+                { label: 'Min', data: days.map(r => r.body_battery_low), backgroundColor: '#c0392b88', borderRadius: 2 },
+                { label: 'Max', data: days.map(r => r.body_battery_high), backgroundColor: '#2d9e6b88', borderRadius: 2 },
+              ]
+            },
+            options: { ...baseOptions(''), plugins: { legend: { display: true, labels: { color: textColor, font: { family: 'Syne Mono', size: 10 }, boxWidth: 10 } } } }
+          });
+        }, 50);
+      }
+
+      // 7. Stress
+      {
+        const { card, id } = makeCard('Stress-Verlauf', `Ø ${avg('stress_avg')}/100`);
+        grid.appendChild(card);
+        setTimeout(() => {
+          const ctx = document.getElementById(id);
+          if (!ctx) return;
+          charts[id] = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [{ data: days.map(r => r.stress_avg), borderColor: '#c9912a', backgroundColor: '#c9912a18', tension: 0.3, pointRadius: 3, fill: true }]
+            },
+            options: { ...baseOptions('/100'), scales: { ...baseOptions().scales, y: { ...baseOptions().scales.y, min: 0, max: 100 } } }
+          });
+        }, 50);
+      }
+
+      // 8. Aktivitäten
+      {
+        const actCard = document.createElement('div');
+        actCard.className = 'dash-card';
+        actCard.innerHTML = `
+          <div class="dash-card-header">
+            <span class="dash-card-title">Aktivitäten</span>
+            <span class="dash-card-value">${acts.length} im Zeitraum</span>
+          </div>
+          <div class="act-list" style="max-height:180px;overflow-y:auto">
+            ${acts.length === 0 ? '<div class="data-loading">Keine Aktivitäten</div>' :
+              acts.slice(0, 10).map(a => `
+                <div class="act-item">
+                  <div>
+                    <div class="act-name">${a.name || a.activity_type || '–'}</div>
+                    <div class="act-meta">${Math.round(a.minutes || 0)} min · ${a.calories || '–'} kcal · ${a.avg_hr || '–'} bpm</div>
+                  </div>
+                  <div class="act-date">${a.date.slice(5)}</div>
+                </div>`).join('')}
+          </div>`;
+        grid.appendChild(actCard);
+      }
+
+    } catch(e) {
+      view.innerHTML = `<div class="data-loading">Fehler beim Laden: ${e.message}</div>`;
+    }
+  }
+
   // ── Tabs ──────────────────────────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -560,6 +620,7 @@
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
       if (tab === 'data') loadDataView();
+      if (tab === 'dashboard') loadDashboard();
     });
   });
 
@@ -570,19 +631,13 @@
       const s = await r.json();
       const bar = document.getElementById('statusBar');
       bar.innerHTML = '';
-      bar.innerHTML += s.db_exists
-        ? `<span class="pill ok">DB: ${s.days_available}T</span>`
-        : `<span class="pill err">DB fehlt</span>`;
-      bar.innerHTML += s.api_key_set
-        ? `<span class="pill ok">Claude</span>`
-        : `<span class="pill err">API Key fehlt</span>`;
-      if (s.latest_date)
-        bar.innerHTML += `<span class="pill">${s.latest_date}</span>`;
+      bar.innerHTML += s.db_exists ? `<span class="pill ok">DB: ${s.days_available}T</span>` : `<span class="pill err">DB fehlt</span>`;
+      bar.innerHTML += s.api_key_set ? `<span class="pill ok">Claude</span>` : `<span class="pill err">API Key fehlt</span>`;
+      if (s.latest_date) bar.innerHTML += `<span class="pill">${s.latest_date}</span>`;
       document.getElementById('lastSync').textContent = formatLastSync(s.last_sync);
       loadMiniStats();
     } catch {
-      document.getElementById('statusBar').innerHTML =
-        '<span class="pill err">Backend nicht erreichbar</span>';
+      document.getElementById('statusBar').innerHTML = '<span class="pill err">Backend nicht erreichbar</span>';
     }
   }
 
@@ -592,15 +647,11 @@
       const d = await r.json();
       document.getElementById('statDays').textContent = d.days || '–';
       const ctx = d.context || '';
-      const extract = label => {
-        const m = ctx.match(new RegExp(`${label}:\\s+([\\d.]+)`));
-        return m ? m[1] : '–';
-      };
+      const extract = label => { const m = ctx.match(new RegExp(`${label}:\\s+([\\d.]+)`)); return m ? m[1] : '–'; };
       document.getElementById('statKcal').textContent = extract('Kalorien');
       document.getElementById('statSleep').innerHTML = extract('Schlaf') + '<span class="stat-unit">h</span>';
       const steps = extract('Schritte');
-      document.getElementById('statSteps').textContent =
-        steps !== '–' ? (parseInt(steps) / 1000).toFixed(1) + 'k' : '–';
+      document.getElementById('statSteps').textContent = steps !== '–' ? (parseInt(steps) / 1000).toFixed(1) + 'k' : '–';
     } catch {}
   }
 
@@ -611,54 +662,33 @@
     try {
       const r = await fetch(`${API}/context`);
       const d = await r.json();
-      const ctx = d.context || '';
-
-      // Text in Sektionen aufteilen (## als Trenner)
-      const sections = ctx.split(/\n(?=## )/);
+      const sections = (d.context || '').split(/\n(?=## )/);
       container.innerHTML = '';
-
       sections.forEach(section => {
         const lines = section.trim().split('\n');
         const header = lines[0].replace(/^#+\s*/, '').trim();
         const content = lines.slice(1).join('\n').trim();
         if (!content) return;
-
         const block = document.createElement('div');
         block.className = 'data-block';
-
-        const blockHeader = document.createElement('div');
-        blockHeader.className = 'data-block-header';
-        blockHeader.textContent = header;
-
-        const blockContent = document.createElement('div');
-        blockContent.className = 'data-block-content';
-        blockContent.textContent = content;
-
-        block.appendChild(blockHeader);
-        block.appendChild(blockContent);
+        block.innerHTML = `<div class="data-block-header">${header}</div><div class="data-block-content">${content}</div>`;
         container.appendChild(block);
       });
-
-      if (!container.children.length) {
-        container.innerHTML = '<div class="data-loading">Keine Daten verfügbar.</div>';
-      }
+      if (!container.children.length) container.innerHTML = '<div class="data-loading">Keine Daten verfügbar.</div>';
     } catch {
-      container.innerHTML = '<div class="data-loading">Fehler beim Laden der Daten.</div>';
+      container.innerHTML = '<div class="data-loading">Fehler beim Laden.</div>';
     }
   }
-
   document.getElementById('dataReloadBtn').addEventListener('click', loadDataView);
 
   // ── Sync ──────────────────────────────────────────────────────────────────
   async function startSync() {
     if (isSyncing) return;
     isSyncing = true;
-    const btn = document.getElementById('syncBtn');
     const icon = document.getElementById('syncIcon');
-    icon.classList.add('spinning');
-    btn.disabled = true;
+    const btn = document.getElementById('syncBtn');
+    icon.classList.add('spinning'); btn.disabled = true;
     showToast('Sync gestartet…', 'ok', 60000);
-
     try {
       await fetch(`${API}/sync`, { method: 'POST' });
       const poll = setInterval(async () => {
@@ -666,28 +696,22 @@
           const r = await fetch(`${API}/sync/status`);
           const s = await r.json();
           if (!s.running) {
-            clearInterval(poll);
-            isSyncing = false;
-            icon.classList.remove('spinning');
-            btn.disabled = false;
+            clearInterval(poll); isSyncing = false; icon.classList.remove('spinning'); btn.disabled = false;
             document.querySelectorAll('.toast').forEach(t => t.remove());
-            const ok = s.log.every(l => l.includes('OK'));
-            showToast(ok ? '✓ Sync erfolgreich' : '⚠ Sync mit Fehlern', ok ? 'ok' : 'err');
+            showToast(s.log.every(l => l.includes('OK')) ? '✓ Sync erfolgreich' : '⚠ Sync mit Fehlern', s.log.every(l => l.includes('OK')) ? 'ok' : 'err');
             document.getElementById('lastSync').textContent = formatLastSync(s.last_sync);
             await checkStatus();
             if (activeTab === 'data') loadDataView();
+            if (activeTab === 'dashboard') loadDashboard();
           }
         } catch { clearInterval(poll); }
       }, 2000);
     } catch {
-      isSyncing = false;
-      icon.classList.remove('spinning');
-      btn.disabled = false;
+      isSyncing = false; icon.classList.remove('spinning'); btn.disabled = false;
       document.querySelectorAll('.toast').forEach(t => t.remove());
       showToast('Sync fehlgeschlagen', 'err');
     }
   }
-
   document.getElementById('syncBtn').addEventListener('click', startSync);
 
   // ── Days Selector ─────────────────────────────────────────────────────────
@@ -700,6 +724,7 @@
       document.getElementById('dateFrom').value = '';
       document.getElementById('dateTo').value = '';
       if (activeTab === 'data') loadDataView();
+      if (activeTab === 'dashboard') loadDashboard();
     });
   });
 
@@ -713,21 +738,19 @@
     document.querySelectorAll('.days-btn').forEach(b => b.classList.remove('active'));
     showToast(`Zeitraum: ${from} bis ${to}`, 'ok', 2000);
     if (activeTab === 'data') loadDataView();
+    if (activeTab === 'dashboard') loadDashboard();
   });
 
   // ── Quick Buttons ─────────────────────────────────────────────────────────
   document.querySelectorAll('.quick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      // Zum Chat-Tab wechseln falls nötig
-      if (activeTab !== 'chat') {
-        document.querySelector('[data-tab="chat"]').click();
-      }
+      if (activeTab !== 'chat') document.querySelector('[data-tab="chat"]').click();
       document.getElementById('input').value = btn.dataset.q;
       sendMessage();
     });
   });
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Chat ──────────────────────────────────────────────────────────────────
   function renderMessage(role, text) {
     document.getElementById('welcome')?.remove();
     const msg = document.createElement('div');
@@ -738,8 +761,7 @@
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     bubble.innerHTML = formatText(text);
-    msg.appendChild(av);
-    msg.appendChild(bubble);
+    msg.appendChild(av); msg.appendChild(bubble);
     document.getElementById('messages').appendChild(msg);
     msg.scrollIntoView({ behavior: 'smooth', block: 'end' });
     return msg;
@@ -751,67 +773,44 @@
       .replace(/### (.*?)(\n|$)/g, '<h3>$1</h3>')
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br>')
-      .replace(/^/, '<p>')
-      .replace(/$/, '</p>');
+      .replace(/^/, '<p>').replace(/$/, '</p>');
   }
 
   function showTyping() {
     const msg = document.createElement('div');
-    msg.className = 'message ai typing';
-    msg.id = 'typing';
+    msg.className = 'message ai typing'; msg.id = 'typing';
     msg.innerHTML = `<div class="avatar">🤖</div><div class="bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
     document.getElementById('messages').appendChild(msg);
     msg.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
-  // ── Send ──────────────────────────────────────────────────────────────────
   async function sendMessage() {
     const input = document.getElementById('input');
     const text = input.value.trim();
     if (!text || isLoading) return;
-    input.value = '';
-    input.style.height = 'auto';
-    isLoading = true;
-    document.getElementById('sendBtn').disabled = true;
+    input.value = ''; input.style.height = 'auto';
+    isLoading = true; document.getElementById('sendBtn').disabled = true;
     renderMessage('user', text);
     messages.push({ role: 'user', content: text });
     showTyping();
-
     const body = { messages, days: selectedDays };
     if (dateFrom && dateTo) { body.date_from = dateFrom; body.date_to = dateTo; }
-
     try {
-      const r = await fetch(`${API}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const r = await fetch(`${API}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await r.json();
       document.getElementById('typing')?.remove();
-      if (data.error) {
-        renderMessage('ai', `⚠️ Fehler: ${data.error}`);
-      } else {
-        renderMessage('ai', data.reply);
-        messages.push({ role: 'assistant', content: data.reply });
-      }
+      if (data.error) { renderMessage('ai', `⚠️ Fehler: ${data.error}`); }
+      else { renderMessage('ai', data.reply); messages.push({ role: 'assistant', content: data.reply }); }
     } catch {
       document.getElementById('typing')?.remove();
       renderMessage('ai', '⚠️ Backend nicht erreichbar.');
     }
-    isLoading = false;
-    document.getElementById('sendBtn').disabled = false;
-    input.focus();
+    isLoading = false; document.getElementById('sendBtn').disabled = false; input.focus();
   }
 
-  // ── Input ─────────────────────────────────────────────────────────────────
   const inp = document.getElementById('input');
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  });
-  inp.addEventListener('input', () => {
-    inp.style.height = 'auto';
-    inp.style.height = Math.min(inp.scrollHeight, 140) + 'px';
-  });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+  inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 140) + 'px'; });
   document.getElementById('sendBtn').addEventListener('click', sendMessage);
 
   // ── Init ──────────────────────────────────────────────────────────────────
@@ -819,7 +818,6 @@
   const thirtyAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
   document.getElementById('dateTo').value = today;
   document.getElementById('dateFrom').value = thirtyAgo;
-
   checkStatus();
 </script>
 </body>

@@ -427,6 +427,18 @@ class Handler(BaseHTTPRequestHandler):
                 "log": _sync_log,
                 "last_sync": _last_sync,
             })
+        elif self.path.startswith("/dashboard"):
+            from urllib.parse import urlparse, parse_qs
+            params = parse_qs(urlparse(self.path).query)
+            days = int(params.get("days", [30])[0])
+            date_from = params.get("date_from", [None])[0]
+            date_to = params.get("date_to", [None])[0]
+            data = load_combined_data(days, date_from, date_to)
+            activities = load_activities(days)
+            self._json({
+                "days": data,
+                "activities": activities,
+            })
         else:
             self.send_response(404)
             self.end_headers()
