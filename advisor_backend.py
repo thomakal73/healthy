@@ -23,6 +23,68 @@ from datetime import date, timedelta, datetime
 load_dotenv()
 
 DB_PATH       = Path(os.getenv("GARMIN_DB_PATH", "garmin_data.db"))
+def init_history_db():
+    if not DB_PATH.exists():
+        return
+    conn = sqlite3.connect(DB_PATH)
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS chat_history (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            messages_json TEXT
+        );
+    """)
+    conn.commit()
+    conn.close()
+def save_conversation(conv_id: str, title: str, messages: list):
+    if not DB_PATH.exists():
+        return
+    conn = sqlite3.connect(DB_PATH)
+    now = datetime.now().isoformat()
+    conn.execute("""
+        INSERT OR REPLACE INTO chat_history VALUES (?,?,
+            COALESCE((SELECT created_at FROM chat_history WHERE id=?), ?),
+            ?,?)
+    """, (conv_id, title, conv_id, now, now, json.dumps(messages, ensure_ascii=False)))
+    conn.commit()
+    conn.close()
+
+def load_conversations() -> list:
+    if not DB_PATH.exists():
+        return []
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute("""
+            SELECT id, title, created_at, updated_at,
+                   json_array_length(messages_json) as msg_count
+            FROM chat_history
+            ORDER BY updated_at DESC
+            LIMIT 20
+        """).fetchall()
+        return [dict(r) for r in rows]
+    except:
+        return []
+    finally:
+        conn.close()
+
+def load_conversation(conv_id: str) -> list:
+    if not DB_PATH.exists():
+        return []
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute(
+            "SELECT messages_json FROM chat_history WHERE id=?", (conv_id,)
+        ).fetchone()
+        return json.loads(row["messages_json"]) if row else []
+    except:
+        return []
+    finally:
+        conn.close()
+
 ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 PORT          = 8765
 HISTORY_DAYS  = 30
@@ -227,7 +289,7 @@ def run_sync():
     for script in ["garmin_collector.py", "yazio_connector.py"]:
         try:
             result = subprocess.run(
-                ["python3", str(scripts_dir / script), "--days", "2"],
+                ["python3", str(scripts_dir / script), "--days", "3"],
                 capture_output=True, text=True, env=env, timeout=120
             )
             _sync_log.append(f"{script}: OK" if result.returncode == 0 else f"{script}: FEHLER\n{result.stderr[-200:]}")
@@ -427,6 +489,12 @@ class Handler(BaseHTTPRequestHandler):
                 "log": _sync_log,
                 "last_sync": _last_sync,
             })
+        elif self.path == "/history":
+            self._json(load_conversations())
+        elif self.path.startswith("/history/") and not self.path.endswith("/delete"):
+            conv_id = self.path.split("/history/")[1]
+            msgs = load_conversation(conv_id)
+            self._json({"messages": msgs})
         elif self.path.startswith("/dashboard"):
             from urllib.parse import urlparse, parse_qs
             params = parse_qs(urlparse(self.path).query)
@@ -451,17 +519,21 @@ class Handler(BaseHTTPRequestHandler):
             days = body.get("days", HISTORY_DAYS)
             date_from = body.get("date_from")
             date_to = body.get("date_to")
+            no_context = body.get("no_context", False)
 
             if not ANTHROPIC_KEY:
                 self._json({"error": "ANTHROPIC_API_KEY fehlt in .env"}, 500)
                 return
 
-            context = build_context(days, date_from, date_to)
-
-            full_messages = [
-                {"role": "user", "content": f"Hier sind meine aktuellen Gesundheitsdaten:\n\n{context}"},
-                {"role": "assistant", "content": "Ich habe deine Daten geladen und analysiert. Was möchtest du wissen?"},
-            ] + messages
+            no_context = body.get("no_context", False)
+            if no_context:
+                full_messages = messages
+            else:
+                context = build_context(days, date_from, date_to)
+                full_messages = [
+                    {"role": "user", "content": f"Hier sind meine aktuellen Gesundheitsdaten:\n\n{context}"},
+                    {"role": "assistant", "content": "Ich habe deine Daten geladen und analysiert. Was möchtest du wissen?"},
+                ] + messages
 
             try:
                 req_body = json.dumps({
@@ -502,51 +574,25 @@ class Handler(BaseHTTPRequestHandler):
             thread.start()
             self._json({"status": "started", "message": "Sync gestartet"})
 
-            context = build_context(days)
+        elif self.path == "/history":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length))
+            conv_id = body.get("id", "")
+            title   = body.get("title", "Gespräch")
+            msgs    = body.get("messages", [])
+            if conv_id and msgs:
+                save_conversation(conv_id, title, msgs)
+                self._json({"status": "saved"})
+            else:
+                self._json({"error": "id und messages erforderlich"}, 400)
 
-            # Kontext als erstes User-Message injizieren
-            full_messages = [
-                {"role": "user",      "content": f"Hier sind meine aktuellen Gesundheitsdaten:\n\n{context}"},
-                {"role": "assistant", "content": "Ich habe deine Daten geladen und analysiert. Was möchtest du wissen?"},
-            ] + messages
-
-            try:
-                req_body = json.dumps({
-                    "model": "claude-sonnet-4-20250514",
-                    "max_tokens": 1500,
-                    "system": load_system_prompt(),
-                    "messages": full_messages,
-                }).encode()
-
-                req = urllib.request.Request(
-                    "https://api.anthropic.com/v1/messages",
-                    data=req_body,
-                    headers={
-                        "x-api-key": ANTHROPIC_KEY,
-                        "anthropic-version": "2023-06-01",
-                        "content-type": "application/json",
-                    },
-                    method="POST",
-                )
-                with urllib.request.urlopen(req, timeout=60) as resp:
-                    result = json.loads(resp.read())
-                    reply = result["content"][0]["text"]
-                    self._json({"reply": reply})
-
-            except urllib.error.HTTPError as e:
-                err = e.read().decode()
-                self._json({"error": f"Claude API Fehler: {err}"}, 500)
-            except Exception as e:
-                self._json({"error": str(e)}, 500)
-
-        elif self.path == "/sync":
-            if _sync_running:
-                self._json({"status": "running", "message": "Sync läuft bereits"})
-                return
-            thread = threading.Thread(target=run_sync, daemon=True)
-            thread.start()
-            self._json({"status": "started", "message": "Sync gestartet"})
-
+        elif self.path.startswith("/history/") and self.path.endswith("/delete"):
+            conv_id = self.path.split("/history/")[1].replace("/delete", "")
+            conn = sqlite3.connect(DB_PATH)
+            conn.execute("DELETE FROM chat_history WHERE id=?", (conv_id,))
+            conn.commit()
+            conn.close()
+            self._json({"status": "deleted"})
     def _serve_file(self, filename, content_type):
         path = Path(filename)
         if not path.exists():
@@ -578,4 +624,5 @@ if __name__ == "__main__":
     print(f"Gesundheitsberater gestartet: http://localhost:{PORT}")
     print(f"Datenbank: {DB_PATH} ({'gefunden' if DB_PATH.exists() else 'NICHT GEFUNDEN'})")
     print("Beenden: Ctrl+C")
+    init_history_db()
     HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
